@@ -2,13 +2,9 @@
 
 A crossplatform app demostrating BLE services.
 
-![Scan for Devices](img/scan.png | width=100)
+<img src="./img/scan.png" alt="Scan for Devices" width="100"> <img src="./img/services.png" alt="Discover Services" width="100">
 
-![Discover Services](img/services.png | width=100)
-
-![Temperature Service](img/temp.png | width=100)
-
-![Console Service](img/console.png | width=100)
+<img src="./img/temp.png" alt="Temperature Service" width="100"> <img src="./img/console.png" alt="Console Service" width="100">
 
 ## Build
 
