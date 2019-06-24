@@ -35,10 +35,10 @@
 	<key>CFBundleName</key>
 	<string>INGdemo</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.5</string>
+	<string>1.1.0</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Need calendar for some functions</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.ingchips.ble.demo</string>
+	<string>com.ingchips.BLEdemoTest</string>
 </dict>
 </plist>

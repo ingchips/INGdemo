@@ -12,6 +12,16 @@ namespace INGota.FOTA
     {
         public const int BLE_MIN_MTU_SIZE = 20;
 
+        static public int MTU2AttSize(int size)
+        {
+            return size - 3;
+        }
+
+        static public int Att2MTUSize(int size)
+        {
+            return size + 3;
+        }
+
         static public String GetDeviceAddress(Guid guid)
         {
             String r = "";

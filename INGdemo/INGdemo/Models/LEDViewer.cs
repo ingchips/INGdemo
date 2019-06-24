@@ -30,7 +30,6 @@ namespace INGdemo.Models
         Slider SliderGreen;
         Slider SliderBlue;
 
-
         public View MakeSlider(string label, out Slider slider)
         {
             var layout = new StackLayout();

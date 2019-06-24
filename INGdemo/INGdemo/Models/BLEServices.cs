@@ -161,6 +161,12 @@ namespace INGdemo.Models
                 Navigation.PushAsync(new ConsoleViewer(BleDevice, services));
                 return;
             }
+
+            if (guid.Equals(AudioViewer.GUID_SERVICE))
+            {
+                Navigation.PushAsync(new AudioViewer(BleDevice, services));
+                return;
+            }
         }
 
         static public string IconOfService(Guid guid)
@@ -188,6 +194,8 @@ namespace INGdemo.Models
                 return ThroughputViewer.ICON_STR;
             if (guid.Equals(ConsoleViewer.GUID_SERVICE))
                 return ConsoleViewer.ICON_STR;
+            if (guid.Equals(AudioViewer.GUID_SERVICE))
+                return AudioViewer.ICON_STR;
 
             return "";
         }
@@ -208,6 +216,8 @@ namespace INGdemo.Models
                     name = ThroughputViewer.SERVICE_NAME;
                 if (s.Id.Equals(ConsoleViewer.GUID_SERVICE))
                     name = ConsoleViewer.SERVICE_NAME;
+                if (s.Id.Equals(AudioViewer.GUID_SERVICE))
+                    name = AudioViewer.SERVICE_NAME;
                 serviceList.Add(new ServiceItem
                 {
                     UUID = s.Id.ToString(),
