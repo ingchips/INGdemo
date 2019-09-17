@@ -93,7 +93,7 @@ namespace INGdemo.Models
             charRGB = chars.FirstOrDefault((c) => c.Id == GUID_CHAR_RGB);
         }
 
-        public LEDViewer(IDevice ADevice, IList<IService> services)
+        public LEDViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             InitUI();
             service = services.First((s) => s.Id == GUID_SERVICE);

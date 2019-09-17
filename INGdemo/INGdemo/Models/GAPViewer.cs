@@ -66,7 +66,7 @@ namespace INGdemo.Models
                 GapAppearance.Text = getAppearance((int)Utils.ParseLittleInt(await achar.ReadAsync()) >> 6);
         }
 
-        public GAPViewer(IDevice ADevice, IList<IService> services)
+        public GAPViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             InitUI();
             service = services.First((s) => s.Id == GUID_SERVICE);

@@ -108,14 +108,14 @@ namespace INGdemo.Models
         {
             var b = charOutput.Value;
             if (b == null) return;
-            b = b.Select((v) => v != 0 ? v : (byte)13).ToArray();
+            b = b.Select((v) => v != 0 ? v : (byte)10).ToArray();
             Device.BeginInvokeOnMainThread(() =>
             {
                 DataLog.Text = DataLog.Text + Encoding.UTF8.GetString(b);
             });
         }
 
-        public ConsoleViewer(IDevice ADevice, IList<IService> services)
+        public ConsoleViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             MonoFamily = "Comic Sans MS";
             switch (Device.RuntimePlatform)

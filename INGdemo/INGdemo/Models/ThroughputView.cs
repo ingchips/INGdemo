@@ -231,9 +231,6 @@ namespace INGdemo.Models
                 Testing = true;
                 StartByteNumber = await GetTotalBytes();
                 source = new CancellationTokenSource();
-                BleDevice.UpdateConnectionInterval(ConnectionInterval.High);
-                MtuSize = Math.Max(Utils.BLE_MIN_MTU_SIZE, await BleDevice.RequestMtuAsync(200) - 3);
-                MtuInfo.Text = string.Format("MTU = {0} B", MtuSize);
 
                 var t = new Task(() => Run(source.Token));
                 t.Start();
@@ -315,6 +312,10 @@ namespace INGdemo.Models
             {
                 charOutput.ValueUpdated += CharOutput_ValueUpdated;
             }
+
+            MtuSize = Math.Max(Utils.BLE_MIN_MTU_SIZE, await BleDevice.RequestMtuAsync(200) - 3);
+            MtuInfo.Text = string.Format("MTU = {0} B", MtuSize);
+            BleDevice.UpdateConnectionInterval(ConnectionInterval.High);
         }
 
         private void CharOutput_ValueUpdated(object sender, Plugin.BLE.Abstractions.EventArgs.CharacteristicUpdatedEventArgs e)
@@ -322,7 +323,7 @@ namespace INGdemo.Models
             S2MByteCounter += (int)charOutput.Value?.Length;
         }
 
-        public ThroughputViewer(IDevice ADevice, IList<IService> services)
+        public ThroughputViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             BleDevice = ADevice;
             InitUI();

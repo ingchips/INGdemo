@@ -140,7 +140,7 @@ namespace INGdemo.Models
                                                     "Mouth",  "Rectum",  "Toe", "Tympanum"};
 
 
-        async Task Connect(IList<IService> services)
+        async Task Connect(IReadOnlyList<IService> services)
         {
             var adapter = CrossBluetoothLE.Current.Adapter;
             service = services.FirstOrDefault((s) => s.Id == GUID_SERVICE);
@@ -177,7 +177,7 @@ namespace INGdemo.Models
             });
         }
 
-        public Thermometer(IDevice ADevice, IList<IService> services)
+        public Thermometer(IDevice ADevice, IReadOnlyList<IService> services)
         { 
             BleDevice = ADevice;
             if (BleDevice == null)
@@ -194,7 +194,7 @@ namespace INGdemo.Models
                 await charMeasValue.StopUpdatesAsync();
         }
 
-        async void ReadData(IList<IService> services)
+        async void ReadData(IReadOnlyList<IService> services)
         {
             bool error = false;
             try

@@ -124,7 +124,7 @@ namespace INGota.Models
             return UpdateInfo;
         }
 
-        public ThermoFOTAViewer(IDevice ADevice, IList<IService> services)
+        public ThermoFOTAViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             BleDevice = ADevice;
             if (BleDevice == null)

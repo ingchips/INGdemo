@@ -29,7 +29,7 @@ namespace INGota.ViewModels
             MessagingCenter.Subscribe<ItemsViewModel, BLEDev>(this, "ScanResult", async (obj, item) =>
             {
                 var newItem = item as BLEDev;
-                await updateDev(newItem);
+                updateDev(newItem);
             });
         }
 

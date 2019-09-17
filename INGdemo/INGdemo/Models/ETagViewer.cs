@@ -356,7 +356,7 @@ namespace INGdemo.Models
             ColorBWR_Pressed(null, null);
         }
 
-        public ETagViewer(IDevice ADevice, IList<IService> services)
+        public ETagViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             BleDevice = ADevice;
             service = services.First((s) => s.Id == GUID_SERVICE);

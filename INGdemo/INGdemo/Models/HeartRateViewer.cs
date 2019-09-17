@@ -182,7 +182,7 @@ namespace INGdemo.Models
             });
         }
 
-        public HeartRateViewer(IDevice ADevice, IList<IService> services)
+        public HeartRateViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             BleDevice = ADevice;
             InitUI();

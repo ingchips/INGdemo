@@ -82,7 +82,7 @@ namespace INGdemo.Models
             await AppendRawItem(chars, "PnP ID", new Guid("00002A50-0000-1000-8000-00805F9B34FB"));
         }
 
-        public DeviceInfoViewer(IDevice ADevice, IList<IService> services)
+        public DeviceInfoViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             InitUI();
             service = services.First((s) => s.Id == GUID_SERVICE);

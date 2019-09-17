@@ -119,7 +119,7 @@ namespace INGdemo.Models
 
         IDevice BleDevice;
 
-        public BatteryViewer(IDevice ADevice, IList<IService> services)
+        public BatteryViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             BleDevice = ADevice;
             InitUI();

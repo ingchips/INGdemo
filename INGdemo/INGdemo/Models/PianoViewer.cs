@@ -172,7 +172,7 @@ namespace INGdemo.Models
             charKey = chars.FirstOrDefault((c) => c.Id == GUID_CHAR_KEY);
         }
 
-        public PianoViewer(IDevice ADevice, IList<IService> services)
+        public PianoViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             InitUI();
             service = services.First((s) => s.Id == GUID_SERVICE);

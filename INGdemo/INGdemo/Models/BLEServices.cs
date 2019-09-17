@@ -35,7 +35,7 @@ namespace INGdemo.Models
         StackLayout layout;
         ListView listView;
         ObservableCollection<ServiceItem> serviceList = new ObservableCollection<ServiceItem>();
-        IList<IService> services;
+        IReadOnlyList<IService> services;
 
         public void InitUI()
         {
@@ -208,7 +208,7 @@ namespace INGdemo.Models
             return "";
         }
 
-        public void showServices(IList<IService> services)
+        public void showServices(IReadOnlyList<IService> services)
         {
             serviceList.Clear();
             foreach (var s in services)

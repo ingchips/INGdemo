@@ -166,7 +166,7 @@ namespace INGdemo.Models
             });
         }
 
-        public RSCViewer(IDevice ADevice, IList<IService> services)
+        public RSCViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             BleDevice = ADevice;
             InitUI();

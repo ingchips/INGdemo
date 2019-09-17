@@ -135,7 +135,7 @@ namespace INGdemo.Models
             );
         }
 
-        public AudioViewer(IDevice ADevice, IList<IService> services)
+        public AudioViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             Decoder = new ADPCMDecoder(8000 / 10);
             Player = DependencyService.Get<IPCMAudio>();
