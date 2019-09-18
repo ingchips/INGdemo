@@ -117,7 +117,7 @@ namespace INGdemo.Models
 
         public ConsoleViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
-            MonoFamily = "Comic Sans MS";
+            MonoFamily = "Courier";
             switch (Device.RuntimePlatform)
             {
                 case Device.iOS:
@@ -125,6 +125,9 @@ namespace INGdemo.Models
                     break;
                 case Device.Android:
                     MonoFamily = "Droid Sans Mono";
+                    break;
+                case Device.UWP:
+                    MonoFamily = "Consolas";
                     break;
             }
 

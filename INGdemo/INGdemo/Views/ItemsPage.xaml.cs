@@ -36,6 +36,19 @@ namespace INGota.Views
             var adapter = CrossBluetoothLE.Current.Adapter;
             adapter.DeviceConnectionLost += Adapter_DeviceConnectionLost;
             adapter.DeviceDisconnected += Adapter_DeviceDisconnected;
+
+            viewModel.ItemsChangedEvent += ViewModel_ItemsChangedEvent;
+        }
+
+        private void ViewModel_ItemsChangedEvent(object sender, EventArgs e)
+        {
+            switch (Device.RuntimePlatform)
+            {
+                case Device.UWP:
+                    ItemsListView.ItemsSource = null;
+                    ItemsListView.ItemsSource = viewModel.Items;
+                    break;
+            }
         }
 
         private void DeviceDisconnected()

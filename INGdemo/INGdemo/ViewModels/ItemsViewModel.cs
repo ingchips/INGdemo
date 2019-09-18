@@ -20,6 +20,8 @@ namespace INGota.ViewModels
         public Command ScanCommand { get; set; }
         public Page View;
 
+        public event EventHandler ItemsChangedEvent;
+
         public ItemsViewModel()
         {
             Title = "BLE Devices";
@@ -29,7 +31,10 @@ namespace INGota.ViewModels
             MessagingCenter.Subscribe<ItemsViewModel, BLEDev>(this, "ScanResult", async (obj, item) =>
             {
                 var newItem = item as BLEDev;
-                updateDev(newItem);
+                Device.BeginInvokeOnMainThread(async () =>
+                {
+                    await updateDev(newItem);
+                });
             });
         }
 
@@ -90,6 +95,7 @@ namespace INGota.ViewModels
             }
             else
             {
+                if (dev.BLEAdvSimpleInfos.Count < 1) return;
                 var i = Items.IndexOf(old);
                 Items.RemoveAt(i);
                 Items.Insert(i, dev);
