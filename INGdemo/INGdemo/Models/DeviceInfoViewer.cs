@@ -19,6 +19,7 @@ namespace INGdemo.Models
     {
         public const string UUID_SERVICE_GAP = "0000180A-0000-1000-8000-00805F9B34FB";
         static public Guid GUID_SERVICE = new Guid(UUID_SERVICE_GAP);
+        static public string SERVICE_NAME = "Device Information";
         static public string ICON_STR = Char.ConvertFromUtf32(0x2139);
         IService service;
 

@@ -21,6 +21,9 @@ namespace INGdemo.Models
         static public Guid GUID_SERVICE = new Guid(UUID_SERVICE_GAP);
         static public Guid GUID_CHAR_DEV_NAME = new Guid("00002A00-0000-1000-8000-00805F9B34FB");
         static public Guid GUID_CHAR_DEV_APPEARANCE = new Guid("00002A01-0000-1000-8000-00805F9B34FB");
+        static public string SERVICE_NAME = "Generic Access";
+        static public string ICON_STR = "";
+
         Label GapName;
         Label GapAppearance;
         IService service;

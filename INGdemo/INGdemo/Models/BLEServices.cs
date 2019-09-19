@@ -17,6 +17,7 @@ using System.Collections.ObjectModel;
 
 using INGota.Models;
 using INGota.FOTA;
+using System.Reflection;
 
 namespace INGdemo.Models
 {
@@ -90,6 +91,33 @@ namespace INGdemo.Models
             Title = (BleDevice.Name?.Length > 0) ? "Services of " + BleDevice.Name : "Services";
         }
 
+        static private Type FindViewer(Guid guid)
+        {
+            Type[] viewers = new Type[]
+            {
+                typeof(GAPViewer),
+                typeof(DeviceInfoViewer),
+                typeof(Thermometer),
+                typeof(BatteryViewer),
+                typeof(RSCViewer),
+
+                typeof(HeartRateViewer),
+                typeof(ThermoFOTAViewer),
+                typeof(ETagViewer),
+                typeof(LEDViewer),
+
+                typeof(ThroughputViewer),
+                typeof(ConsoleViewer),
+                typeof(AudioViewer),
+                typeof(PianoViewer),
+                typeof(DirFindingViewer)
+            };
+
+            return viewers.FirstOrDefault((t) => 
+                        guid.Equals((Guid)t.GetField("GUID_SERVICE", BindingFlags.Static | BindingFlags.Public)
+                                           .GetValue(null)));
+        }
+
         private void ListView_ItemTapped(object sender, ItemTappedEventArgs e)
         {
             var item = e.Item as ServiceItem;
@@ -97,115 +125,20 @@ namespace INGdemo.Models
                 return;
             var guid = new Guid(item.UUID);
 
-            if (guid.Equals(GAPViewer.GUID_SERVICE))
+            Type t = FindViewer(guid);
+            if (t != null)
             {
-                Navigation.PushAsync(new GAPViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(DeviceInfoViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new DeviceInfoViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(BatteryViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new BatteryViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(Thermometer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new Thermometer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(ThermoFOTAViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new ThermoFOTAViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(RSCViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new RSCViewer(BleDevice, services));
-                return;
-            }
-            if (guid.Equals(HeartRateViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new HeartRateViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(ETagViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new ETagViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(LEDViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new LEDViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(ThroughputViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new ThroughputViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(ConsoleViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new ConsoleViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(AudioViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new AudioViewer(BleDevice, services));
-                return;
-            }
-
-            if (guid.Equals(PianoViewer.GUID_SERVICE))
-            {
-                Navigation.PushAsync(new PianoViewer(BleDevice, services));
-                return;
+                Page p = (Page)t.InvokeMember(t.Name, BindingFlags.Public |
+                        BindingFlags.Instance | BindingFlags.CreateInstance,
+                        null, null, new object[] { BleDevice, services });
+                Navigation.PushAsync(p);
             }
         }
 
         static public string IconOfService(Guid guid)
         {
-            if (guid.Equals(DeviceInfoViewer.GUID_SERVICE))
-                return DeviceInfoViewer.ICON_STR;
-
-            if (guid.Equals(Thermometer.GUID_SERVICE))
-                return Thermometer.ICON_STR;
-            if (guid.Equals(BatteryViewer.GUID_SERVICE))
-                return BatteryViewer.ICON_STR;
-            if (guid.Equals(RSCViewer.GUID_SERVICE))
-                return RSCViewer.ICON_STR;
-            if (guid.Equals(HeartRateViewer.GUID_SERVICE))
-                return HeartRateViewer.ICON_STR;
-
-            if (guid.Equals(ThermoFOTAViewer.GUID_SERVICE))
-                return ThermoFOTAViewer.ICON_STR;
-            if (guid.Equals(ETagViewer.GUID_SERVICE))
-                return ETagViewer.ICON_STR;
-            if (guid.Equals(LEDViewer.GUID_SERVICE))
-                return LEDViewer.ICON_STR;
-
-            if (guid.Equals(ThroughputViewer.GUID_SERVICE))
-                return ThroughputViewer.ICON_STR;
-            if (guid.Equals(ConsoleViewer.GUID_SERVICE))
-                return ConsoleViewer.ICON_STR;
-            if (guid.Equals(AudioViewer.GUID_SERVICE))
-                return AudioViewer.ICON_STR;
-            if (guid.Equals(PianoViewer.GUID_SERVICE))
-                return PianoViewer.ICON_STR;
-
-            return "";
+            FieldInfo t = FindViewer(guid)?.GetField("ICON_STR", BindingFlags.Static | BindingFlags.Public);
+            return t != null ? t.GetValue(null).ToString() : "";
         }
 
         public void showServices(IReadOnlyList<IService> services)
@@ -214,20 +147,11 @@ namespace INGdemo.Models
             foreach (var s in services)
             {
                 var name = s.Name;
-                if (s.Id.Equals(ThermoFOTAViewer.GUID_SERVICE))
-                    name = ThermoFOTAViewer.SERVICE_NAME;
-                if (s.Id.Equals(ETagViewer.GUID_SERVICE))
-                    name = ETagViewer.SERVICE_NAME;
-                if (s.Id.Equals(LEDViewer.GUID_SERVICE))
-                    name = LEDViewer.SERVICE_NAME;
-                if (s.Id.Equals(ThroughputViewer.GUID_SERVICE))
-                    name = ThroughputViewer.SERVICE_NAME;
-                if (s.Id.Equals(ConsoleViewer.GUID_SERVICE))
-                    name = ConsoleViewer.SERVICE_NAME;
-                if (s.Id.Equals(AudioViewer.GUID_SERVICE))
-                    name = AudioViewer.SERVICE_NAME;
-                if (s.Id.Equals(PianoViewer.GUID_SERVICE))
-                    name = PianoViewer.SERVICE_NAME;
+
+                FieldInfo t = FindViewer(s.Id)?.GetField("SERVICE_NAME", BindingFlags.Static | BindingFlags.Public);
+                if (t != null)
+                    name = t.GetValue(null).ToString();
+
                 serviceList.Add(new ServiceItem
                 {
                     UUID = s.Id.ToString(),
