@@ -68,7 +68,7 @@ namespace INGdemo.Lib
 
         internal AngleEstimator1()
         {
-            FDescription = "Ant: 2 | SS: 1μs | [0, 1]..";
+            FDescription = "Switching Pattern: [0, 1]";
         }
 
         override internal double Estimate(double fc, Complex[] iqs)

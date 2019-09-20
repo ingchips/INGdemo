@@ -39,32 +39,38 @@ namespace INGdemo.Models
 
         public void InitUI()
         {
-            var layout = new StackLayout();
+            var layout = new StackLayout
+            {
+                VerticalOptions = LayoutOptions.FillAndExpand,
+                Padding = new Thickness(10, 10, 10, 10)
+            };
 
             AntCfg = new Label
             {
                 Text = "---",
-                Style = Device.Styles.SubtitleStyle,
+                Style = Device.Styles.CaptionStyle,
                 HorizontalTextAlignment = TextAlignment.Center
             };
 
             AngleLable = new Label
             {
                 Text = "",
-                Style = Device.Styles.CaptionStyle,
+                Style = Device.Styles.SubtitleStyle,
                 HorizontalTextAlignment = TextAlignment.Center
             };
 
-            layout.Children.Add(AntCfg);
             layout.Children.Add(AngleLable);
+            layout.Children.Add(AntCfg);
+            
 
             Indicator = new AngleIndicatorControl
             {
-                VerticalOptions = LayoutOptions.FillAndExpand
+                VerticalOptions = LayoutOptions.FillAndExpand,
+                HorizontalOptions = LayoutOptions.FillAndExpand
             };
             layout.Children.Add(Indicator);
 
-            Content = new ScrollView { Content = layout };
+            Content = layout; //  new ScrollView { Content = layout };
             Title = SERVICE_NAME;
         }
 
@@ -123,31 +129,86 @@ namespace INGdemo.Models
     internal class AngleIndicatorControl : SKCanvasView
     {
         double FAngle;
+
+        enum TextPosition
+        {
+            Left,
+            Right,
+            Top,
+            Bottom
+        }
+
+        void DrawText(SKCanvas canvas, SKPaint paint, string text, float x, float y, TextPosition pos)
+        {
+            var bounds = new SKRect();
+            paint.MeasureText(text, ref bounds);
+            float width = bounds.Width;
+            float height = bounds.Height;
+            switch (pos)
+            {
+                case TextPosition.Left:
+                    canvas.DrawText(text, x - width, y + height / 2, paint);
+                    break;
+                case TextPosition.Right:
+                    canvas.DrawText(text, x, y + height / 2, paint);
+                    break;
+                case TextPosition.Top:
+                    canvas.DrawText(text, x - width / 2, y, paint);
+                    break;
+                case TextPosition.Bottom:
+                    canvas.DrawText(text, x - width / 2, y + height, paint);
+                    break;
+            }
+        }
+
         protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
         {
             var canvas = e.Surface.Canvas;
-            var min = Math.Min((float)Width, (float)Height);
-            float radius = (float)(min * 0.4);
-            var center = new SKPoint((float)(min * 0.1 + radius), (float)Width / 2);
+            var min = (float)Math.Min(CanvasSize.Width, CanvasSize.Height);
+            float radius = min * 0.4f;
+            float scaling = (float)(CanvasSize.Width / Width);
+            var center = new SKPoint(CanvasSize.Width / 2, min * 0.1f + radius);
             SKPaint paint = new SKPaint
             {
                 Color = Color.LightGray.ToSKColor(),
-                StrokeWidth = 5,
-                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 5 * scaling,
+                Style = SKPaintStyle.StrokeAndFill,
+                TextSize = 12 * scaling,
                 IsAntialias = true
             };
             
             canvas.Clear();
             canvas.DrawCircle(center, radius, paint);
 
+            // draw lines
+            paint.Style = SKPaintStyle.Stroke;
+            paint.StrokeWidth = 1 * scaling;
+            paint.Color = Color.Gray.ToSKColor();
+            canvas.DrawLine(center.X - radius, center.Y, center.X + radius, center.Y, paint);
+            canvas.DrawLine(center.X, center.Y - radius, center.X, center.Y + radius, paint);
+
+            // degree markers
+            paint.Color = Color.Black.ToSKColor();
+            DrawText(canvas, paint, "0", center.X + radius, center.Y, TextPosition.Left);
+            DrawText(canvas, paint, "90",  center.X, center.Y - radius, TextPosition.Bottom);
+            DrawText(canvas, paint, "180", center.X - radius, center.Y, TextPosition.Right);
+            DrawText(canvas, paint, "270", center.X , center.Y + radius, TextPosition.Top);
+
+            paint.PathEffect = SKPathEffect.CreateDash(new float[] {10,10}, 0);
+            canvas.DrawCircle(center, radius / 3, paint);
+            canvas.DrawCircle(center, radius * 2 / 3, paint);
+
+            paint.PathEffect = null;
             paint.Color = Color.Orange.ToSKColor();
-            var p1 = new SKPoint((float)(center.X + radius * 0.9 * Math.Cos(FAngle)),
-                                 (float)(center.Y - radius * 0.9 * Math.Sin(FAngle)));
+            paint.StrokeCap = SKStrokeCap.Round;
+            paint.StrokeWidth = 5 * scaling;
+            var p1 = new SKPoint((float)(center.X + radius * 0.9f * Math.Cos(FAngle)),
+                                 (float)(center.Y - radius * 0.9f * Math.Sin(FAngle)));
             canvas.DrawLine(center, p1, paint);
 
-            paint.Color = Color.LightGray.ToSKColor();
+            paint.Color = Color.Gray.ToSKColor();
             paint.Style = SKPaintStyle.StrokeAndFill;
-            canvas.DrawCircle(center, 5, paint);
+            canvas.DrawCircle(center, 5 * scaling, paint);
         }
 
         internal double AngleRad
