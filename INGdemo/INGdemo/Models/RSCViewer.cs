@@ -20,6 +20,7 @@ namespace INGdemo.Models
     {
         static public Guid GUID_SERVICE = new Guid("00001814-0000-1000-8000-00805F9B34FB");
         static public Guid GUID_CHAR_RSC_MEAS = new Guid("00002A53-0000-1000-8000-00805F9B34FB");
+        static public string SERVICE_NAME = "Running Speed and Cadence Service";
         static public string ICON_STR = Char.ConvertFromUtf32(0x1F6B6);
 
         IService service;
@@ -86,7 +87,7 @@ namespace INGdemo.Models
             grid.Margin = 20;
 
             Content = new ScrollView { Content = grid };
-            Title = "Running Speed and Cadence Service";
+            Title = SERVICE_NAME;
         }
 
         FormattedString showValue(string value, string unit)

@@ -110,7 +110,8 @@ namespace INGdemo.Models
                 typeof(ConsoleViewer),
                 typeof(AudioViewer),
                 typeof(PianoViewer),
-                typeof(DirFindingViewer)
+                typeof(DirFindingViewer),
+                typeof(SmartHomeViewer),
             };
 
             return viewers.FirstOrDefault((t) => 

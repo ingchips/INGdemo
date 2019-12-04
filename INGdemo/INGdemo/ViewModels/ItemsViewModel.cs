@@ -51,6 +51,12 @@ namespace INGota.ViewModels
                 Items.Clear();
                 var adapter = CrossBluetoothLE.Current.Adapter;
                 adapter.ScanTimeout = 0x7fffffff;
+                switch (Device.RuntimePlatform)
+                {
+                    case Device.UWP:
+                        adapter.ScanMode = Plugin.BLE.Abstractions.Contracts.ScanMode.Passive;
+                        break;
+                }
 
                 adapter.DeviceAdvertised += (s, a) =>
                 {
