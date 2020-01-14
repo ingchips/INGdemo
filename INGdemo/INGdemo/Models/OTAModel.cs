@@ -54,13 +54,29 @@ namespace INGota.Models
             container.Children.Add(server);
             container.Children.Add(urlInput);
 
+            var btn = new Button
+            {
+                Text = "Activate Secondary App"
+            };
+            btn.Pressed += Btn_Pressed;
+
             container.Children.Add(new BoxView());
 
             container.Children.Add(BuildSummary());
             container.Children.Add(BuidUpdateInfo());
 
+            container.Children.Add(new BoxView());
+            container.Children.Add(btn);
+
             Title = SERVICE_NAME;
             Content = new ScrollView { Content = container };
+        }
+
+        private async void Btn_Pressed(object sender, EventArgs e)
+        {
+            await ota.ActivateSecondaryApp();
+            var adapter = CrossBluetoothLE.Current.Adapter;
+            await adapter.DisconnectDeviceAsync(BleDevice);
         }
 
         View BuildSummary()

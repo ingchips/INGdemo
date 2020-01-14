@@ -68,21 +68,23 @@ namespace INGota.FOTA
             ServerError
         }
 
-        const int FLASH_BASE        = Ing91800.FLASH_BASE;
-        const int FLASH_SIZE        = Ing91800.FLASH_SIZE;
-        const int FLASH_PAGE_SIZE   = Ing91800.FLASH_PAGE_SIZE;
-        const int FLASH_OTA_PAGE    = Ing91800.FLASH_OTA_PAGE;
-        const int OTA_UPDATE_FLAG   = 0x5A5A5A5A;
+        const int FLASH_BASE = Ing91800.FLASH_BASE;
+        const int FLASH_SIZE = Ing91800.FLASH_SIZE;
+        const int FLASH_PAGE_SIZE = Ing91800.FLASH_PAGE_SIZE;
+        const int FLASH_OTA_PAGE = Ing91800.FLASH_OTA_PAGE;
+        const int OTA_UPDATE_FLAG = 0x5A5A5A5A;
+        const int FLASH_OTA_DATA_HIGH = FLASH_OTA_PAGE - Ing91800.FLASH_PAGE_SIZE;
 
         const int OTA_CTRL_STATUS_DISABLED = 0;
-        const int OTA_CTRL_STATUS_OK       = 1;
-        const int OTA_CTRL_STATUS_ERROR    = 2;
+        const int OTA_CTRL_STATUS_OK = 1;
+        const int OTA_CTRL_STATUS_ERROR = 2;
 
-        const int OTA_CTRL_START           = 0xAA; // param: no
-        const int OTA_CTRL_PAGE_BEGIN      = 0xB0; // param: page address, following DATA contains the data
-        const int OTA_CTRL_PAGE_END        = 0xB1; // param: no
-        const int OTA_CTRL_READ_PAGE       = 0xC0; // param: page address
-        const int OTA_CTRL_REBOOT          = 0xFF; // param: no
+        const int OTA_CTRL_START = 0xAA; // param: no
+        const int OTA_CTRL_PAGE_BEGIN = 0xB0; // param: page address, following DATA contains the data
+        const int OTA_CTRL_PAGE_END = 0xB1; // param: no
+        const int OTA_CTRL_READ_PAGE = 0xC0; // param: page address
+        const int OTA_CTRL_SWITCH_APP = 0xD0; // param: no
+        const int OTA_CTRL_REBOOT = 0xFF; // param: no
 
         string FUpdateURL;
 
@@ -118,7 +120,7 @@ namespace INGota.FOTA
 
         public string UpdateInfo { get; set; }
 
-        public string LocalVersion { get { return Local != null ? Local.ToString() : "n/a";  } }
+        public string LocalVersion { get { return Local != null ? Local.ToString() : "n/a"; } }
         public string LatestVersion { get { return Latest != null ? Latest.ToString() : "n/a"; } }
 
         void SetStatus(OTAStatus value)
@@ -141,6 +143,11 @@ namespace INGota.FOTA
             Local.app[0] = v[4 + 0] + (v[4 + 1] << 8);
             Local.app[1] = v[4 + 2];
             Local.app[2] = v[4 + 3];
+        }
+
+        public async Task ActivateSecondaryApp()
+        {
+            await driver.WriteCtrl(new byte[] { OTA_CTRL_SWITCH_APP });
         }
 
         public async Task CheckUpdate()
@@ -242,7 +249,7 @@ namespace INGota.FOTA
 
         protected virtual void MakeFlashProcedure()
         {
-            int addr = FLASH_OTA_PAGE;
+            int addr = FLASH_OTA_DATA_HIGH;
             if (Bins.Count < 1)
                 return;
 

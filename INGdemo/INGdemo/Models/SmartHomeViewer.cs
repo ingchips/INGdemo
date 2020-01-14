@@ -92,11 +92,15 @@ namespace INGdemo.Models
         LightControl lightCtrl;
         View viewTemp;
         View viewLight;
+        Frame frame;
         bool hasLight;
         Microcharts.Entry[] tempEntries;
         int id;
 
         static int TEMP_SIZE = 60;
+        readonly Color TEXT_COLOR = Color.LightGray;
+        readonly Color BK_COLOR = Color.DarkSlateBlue;
+        readonly Color BK_COLOR_OFFLINE = Color.DarkGray;
 
         View MakeTempInd()
         {
@@ -111,10 +115,14 @@ namespace INGdemo.Models
             for (var i = 0; i < tempEntries.Length; i++)
                 tempEntries[i] = new Microcharts.Entry(10);
 
-            var chart = new LineChart() { Entries = tempEntries };
+            var chart = new LineChart
+            { 
+                Entries = tempEntries,
+                BackgroundColor = BK_COLOR.ToSKColor()
+            };
             chartView = new ChartView
             {
-                Chart = chart,
+                Chart = chart,                
                 HorizontalOptions = LayoutOptions.FillAndExpand
             };
 
@@ -125,7 +133,8 @@ namespace INGdemo.Models
                 VerticalTextAlignment = TextAlignment.Center,
                 HorizontalOptions = LayoutOptions.End,
                 Text = "°C",
-                WidthRequest = TEMP_SIZE
+                WidthRequest = TEMP_SIZE,
+                TextColor = TEXT_COLOR
             };
             
             stack.Children.Add(new Label
@@ -174,25 +183,36 @@ namespace INGdemo.Models
                 Style = Device.Styles.SubtitleStyle,
                 HorizontalTextAlignment = TextAlignment.Start,
                 VerticalTextAlignment = TextAlignment.Center,
-                Text = caption
+                Text = caption,
+                TextColor = TEXT_COLOR
             };
             offlineInd = new Label
             {
                 Style = Device.Styles.ListItemTextStyle,
                 VerticalTextAlignment = TextAlignment.Center,
                 HorizontalOptions = LayoutOptions.End,
-                Text = "offline"
+                Text = "offline",
+                TextColor = TEXT_COLOR
             };
             labelStack.Children.Add(label);
             labelStack.Children.Add(offlineInd);
 
-            stack.Children.Add(new BoxView() { Color = Color.Gray, HeightRequest = 1, Opacity = 0.5 });
+            // stack.Children.Add(new BoxView() { Color = Color.Gray, HeightRequest = 1, Opacity = 0.5 });
             stack.Children.Add(labelStack);
             viewTemp = MakeTempInd();
             viewLight = MakeLights();
             stack.Children.Add(viewTemp);
             stack.Children.Add(viewLight);
-            view = stack;
+
+            frame = new Frame
+            {
+                CornerRadius = 10,
+                Padding = 10,
+                Content = stack,
+                BackgroundColor = BK_COLOR_OFFLINE
+            };
+
+            view = frame;
             SetDevStatus(0);
         }
 
@@ -217,6 +237,14 @@ namespace INGdemo.Models
             lightCtrl.SetCurrentRGB(r, g, b);
         }
 
+        SKColor TemperatureColor(float v)
+        {
+            if (v > 35) v = 35;
+            else if (v < 15) v = 15;
+            var hue = 270 * (35 - v) / 20;
+            return SKColor.FromHsl(hue, 100, 50);
+        }
+
         public void RecordTemp(string value)
         {            
             temperature.Text = value + "°C";
@@ -225,7 +253,10 @@ namespace INGdemo.Models
                 float v = float.Parse(value);
                 for (var i = 0; i < tempEntries.Length - 1; i++)
                     tempEntries[i] = tempEntries[i + 1];
-                tempEntries[tempEntries.Length - 1] = new Microcharts.Entry(v);
+                tempEntries[tempEntries.Length - 1] = new Microcharts.Entry(v)
+                {
+                    Color = TemperatureColor(v)
+                };
                 chartView.InvalidateSurface();
             }
             catch
@@ -240,6 +271,7 @@ namespace INGdemo.Models
             viewLight.IsVisible = hasLight;
 
             offlineInd.IsVisible = status == 0;
+            frame.BackgroundColor = status == 0 ? BK_COLOR_OFFLINE : BK_COLOR;
         }
 
         public int Id { get => id; }
