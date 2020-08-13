@@ -52,7 +52,7 @@ namespace INGota.FOTA
 
         static public bool IsConnectable(IEnumerable<AdvertisementRecord> advs)
         {
-            if ((Utils.GetAdvFlags(advs) & 0x2) != 0)
+            if ((Utils.GetAdvFlags(advs) & 0x3) != 0)
                 return true;
             var adv = advs.Where((x) => x.Type == AdvertisementRecordType.IsConnectable).FirstOrDefault();
             return adv != null ? adv.Data[0] != 0 : false;

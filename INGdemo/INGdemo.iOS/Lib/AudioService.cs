@@ -41,7 +41,7 @@ namespace INGdemo.Lib.iOS
             var interleaved = false;
             var desc = new AudioStreamBasicDescription()
             {
-                SampleRate = 8000,
+                SampleRate = AudioConfig.SampleRate,
                 Format = AudioFormatType.LinearPCM,
                 FormatFlags = AudioFormatFlags.LinearPCMIsSignedInteger | AudioFormatFlags.LinearPCMIsPacked,
                 BitsPerChannel = 16,

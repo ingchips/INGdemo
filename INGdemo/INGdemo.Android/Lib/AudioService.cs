@@ -31,10 +31,10 @@ namespace INGdemo.Lib.Droid
                     .Build(),
                 new AudioFormat.Builder()
                     .SetEncoding(Android.Media.Encoding.Pcm16bit)
-                    .SetSampleRate(8000)
+                    .SetSampleRate(AudioConfig.SampleRate)
                     .SetChannelMask(ChannelOut.Mono)
                     .Build(),
-                8000 * 2 / 5,
+                AudioConfig.SampleRate * 2 / 5,
                 AudioTrackMode.Stream,
                 1);
             Track.Play();
@@ -42,9 +42,12 @@ namespace INGdemo.Lib.Droid
 
         public void Stop()
         {
-            Track.Stop();
-            Track.Dispose();
-            Track = null;
+            if (Track != null)
+            {
+                Track.Stop();
+                Track.Dispose();
+                Track = null;
+            }            
         }
 
         ~AudioServiceImpl()

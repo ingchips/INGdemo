@@ -25,7 +25,8 @@ namespace INGota.FOTA
         internal const int FLASH_BASE   = 0x4000;
         internal const int FLASH_SIZE   = 512 * 1024;
         internal const int FLASH_PAGE_SIZE = 8 * 1024;
-        internal const int FLASH_OTA_PAGE = FLASH_BASE + FLASH_SIZE - FLASH_PAGE_SIZE;
+        internal const int FLASH_INFO_BASE = 0x84000;
+        internal const int FLASH_OTA_PAGE = FLASH_INFO_BASE + FLASH_PAGE_SIZE;
     }
 
     internal class Version
@@ -73,11 +74,13 @@ namespace INGota.FOTA
         const int FLASH_PAGE_SIZE = Ing91800.FLASH_PAGE_SIZE;
         const int FLASH_OTA_PAGE = Ing91800.FLASH_OTA_PAGE;
         const int OTA_UPDATE_FLAG = 0x5A5A5A5A;
-        const int FLASH_OTA_DATA_HIGH = FLASH_OTA_PAGE - Ing91800.FLASH_PAGE_SIZE;
+        const int OTA_LOCK_FLAG = 0x5A5A5A5A;
+        const int FLASH_OTA_DATA_HIGH = Ing91800.FLASH_BASE + Ing91800.FLASH_SIZE;
 
         const int OTA_CTRL_STATUS_DISABLED = 0;
         const int OTA_CTRL_STATUS_OK = 1;
         const int OTA_CTRL_STATUS_ERROR = 2;
+        const int OTA_CTRL_STATUS_WAIT_DATA = 3;
 
         const int OTA_CTRL_START = 0xAA; // param: no
         const int OTA_CTRL_PAGE_BEGIN = 0xB0; // param: page address, following DATA contains the data
@@ -122,6 +125,8 @@ namespace INGota.FOTA
 
         public string LocalVersion { get { return Local != null ? Local.ToString() : "n/a"; } }
         public string LatestVersion { get { return Latest != null ? Latest.ToString() : "n/a"; } }
+
+        public bool LockSysAfterUpdate { get; set; }
 
         void SetStatus(OTAStatus value)
         {
@@ -259,7 +264,7 @@ namespace INGota.FOTA
                 b.WriteAddress = addr;
             }
 
-            var update = new byte [(4 + 4 * Bins.Count) * 4];
+            var update = new byte [(1 + 4 * Bins.Count + 4) * 4];
 
             Utils.WriteLittle(0, update, 0); // mark end
             int c = 4;
@@ -271,8 +276,9 @@ namespace INGota.FOTA
                 Utils.WriteLittle(OTA_UPDATE_FLAG, update, c); c += 4;
             }
 
+            Utils.WriteLittle(LockSysAfterUpdate ? (UInt32)OTA_LOCK_FLAG : (UInt32)0, update, c); c += 4;
             Utils.WriteLittle((UInt32)Entry, update, c); c += 4;
-            Utils.WriteLittle(OTA_UPDATE_FLAG, update, c); c += 4; ;
+            Utils.WriteLittle(OTA_UPDATE_FLAG, update, c); c += 4;
             Utils.WriteLittle((UInt32)Entry, update, c);
 
             var meta = new OTABin();
@@ -288,6 +294,14 @@ namespace INGota.FOTA
             if ((r == null) || (r.Length < 1))
                 return false;
             return r[0] == OTA_CTRL_STATUS_OK;
+        }
+
+        async Task<int> ReadStatus()
+        {
+            var r = await driver.ReadCtrl();
+            if ((r == null) || (r.Length < 1))
+                return OTA_CTRL_STATUS_ERROR;
+            return r[0];
         }
 
         void SendProgress(ProgressArgs e, string msg)
@@ -329,8 +343,18 @@ namespace INGota.FOTA
             Utils.WriteLittle(param, cmd, 1);
 
             if (!await driver.WriteCtrl(cmd)) return false;
-            await Task.Delay(10);
-            return await CheckDevStatus();
+
+            while (true)
+            {
+                await Task.Delay(10);
+                switch (await ReadStatus())
+                {
+                    case OTA_CTRL_STATUS_ERROR: 
+                        return false;
+                    case OTA_CTRL_STATUS_OK:
+                        return true;
+                }
+            }            
         }
 
         async Task<bool> BurnFiles()

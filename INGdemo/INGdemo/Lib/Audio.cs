@@ -12,6 +12,11 @@ namespace INGdemo.Lib
         void Stop();
     }
 
+    public class AudioConfig
+    {
+        public static readonly int SampleRate = 16000;
+    }
+
     class ADPCMState
     {
         internal Int16 predicated;

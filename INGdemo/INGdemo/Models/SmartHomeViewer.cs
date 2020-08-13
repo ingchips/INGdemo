@@ -412,13 +412,15 @@ namespace INGdemo.Models
             Device.BeginInvokeOnMainThread(() =>
             {
                 var v = e.Characteristic.Value;
+                int id;
                 if (v.Length < 2) return;
-                int id = v[1];
-                if (id >= rooms.Count) return;
+                
                 switch ((CmdCode)v[0])
                 {
                     case CmdCode.DeviceStatus:
                         {
+                            id = v[1];
+                            if (id >= rooms.Count) return;
                             for (var j = 0; j < (v.Length - 1) / 2; j++)
                             {
                                 rooms[v[1 + 2 * j]].SetDevStatus(v[1 + 2 * j + 1]);
@@ -426,6 +428,8 @@ namespace INGdemo.Models
                         }
                         break;
                     case CmdCode.TemperatureReport:
+                        id = v[1];
+                        if (id >= rooms.Count) return;
                         if (v.Length != 2 + 4) return;
                         var t = new byte[4];
                         for (var i = 0; i < 4; i++)
@@ -433,8 +437,11 @@ namespace INGdemo.Models
                         rooms[id].RecordTemp(Utils.float_ieee_11073_val_to_repr((UInt32)Utils.ParseLittleInt(t)));
                         break;
                     case CmdCode.RGB:
-                        if (v.Length != 5) return;
-                        rooms[id].SetCurrentRGB(v[2], v[3], v[4]);
+                        for (int k = 0; k < (v.Length - 1) / 3; k++)
+                        {
+                            if (k >= rooms.Count) return;
+                            rooms[k].SetCurrentRGB(v[1 + 3 * k + 0], v[1 + 3 * k + 1], v[1 + 3 * k + 2]);
+                        }
                         break;
                 }
             });

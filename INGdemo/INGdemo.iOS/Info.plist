@@ -35,10 +35,12 @@
 	<key>CFBundleName</key>
 	<string>INGdemo</string>
 	<key>CFBundleVersion</key>
-	<string>1.1.0</string>
+	<string>1.2.0</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Need calendar for some functions</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.ingchips.BLEdemoTest</string>
+	<string>com.ingchips.BLEdemo</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Need Bluetooth LE to connect to devices.</string>
 </dict>
 </plist>

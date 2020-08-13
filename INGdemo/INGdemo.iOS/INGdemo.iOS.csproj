@@ -51,11 +51,21 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
     <MtouchArch>ARM64</MtouchArch>
-    <CodesignKey>iPhone Developer: zhengji.li@ingchips.com (H63SW58W7N)</CodesignKey>
+    <CodesignKey>Apple Development: zhengji.li@ingchips.com (H63SW58W7N)</CodesignKey>
     <MtouchDebug>true</MtouchDebug>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <CodesignProvision>iOS Team Provisioning Profile: com.ingchips.BLEdemoTest</CodesignProvision>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <MtouchSdkVersion>
+    </MtouchSdkVersion>
+    <MtouchLink>SdkOnly</MtouchLink>
+    <MtouchHttpClientHandler>HttpClientHandler</MtouchHttpClientHandler>
+    <MtouchFastDev>false</MtouchFastDev>
+    <MtouchInterpreter>
+    </MtouchInterpreter>
+    <MtouchNoSymbolStrip>true</MtouchNoSymbolStrip>
+    <MtouchFloat32>true</MtouchFloat32>
+    <DeviceSpecificBuild>false</DeviceSpecificBuild>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <DebugType>none</DebugType>
@@ -65,11 +75,12 @@
     <WarningLevel>4</WarningLevel>
     <MtouchArch>ARM64</MtouchArch>
     <ConsolePause>false</ConsolePause>
-    <CodesignKey>iPhone Developer</CodesignKey>
+    <CodesignKey>iPhone Distribution: Ingchips Technology Co., Ltd. (3Y735CMND7)</CodesignKey>
     <CodesignEntitlements>
     </CodesignEntitlements>
     <OptimizePNGs>true</OptimizePNGs>
-    <CodesignProvision>iOS Team Provisioning Profile: com.ingchips.BLEdemoTest</CodesignProvision>
+    <CodesignProvision>
+    </CodesignProvision>
     <MtouchEnableSGenConc>true</MtouchEnableSGenConc>
     <CodesignExtraArgs />
     <CodesignResourceRules />
@@ -154,15 +165,15 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Plugin.Permissions">
-      <Version>5.0.0-beta</Version>
+      <Version>6.0.1</Version>
     </PackageReference>
     <PackageReference Include="SkiaSharp.Views">
-      <Version>1.68.1</Version>
+      <Version>2.80.1</Version>
     </PackageReference>
     <PackageReference Include="Xam.Plugin.Media">
-      <Version>4.0.1.5</Version>
+      <Version>5.0.1</Version>
     </PackageReference>
-    <PackageReference Include="Xamarin.Forms" Version="4.3.0.991221" />
+    <PackageReference Include="Xamarin.Forms" Version="4.8.0.1269" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
   <ItemGroup>
@@ -178,4 +189,9 @@
     <BundleResource Include="Resources\logo_cn_en.jpg" />
   </ItemGroup>
   <ItemGroup />
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties XamarinHotReloadWrongLinkerErrorInfoBarINGdemoiOSHideInfoBar="True" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>
