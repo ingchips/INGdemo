@@ -4,11 +4,11 @@ using System.IO.Compression;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
+using System.Net;
+using OxyPlot;
 
 namespace INGota.FOTA
 {
@@ -155,6 +155,35 @@ namespace INGota.FOTA
             await driver.WriteCtrl(new byte[] { OTA_CTRL_SWITCH_APP });
         }
 
+        public static async Task<Stream> URLGetStream(string url)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "GET";
+            HttpWebResponse response;
+            response = (HttpWebResponse)await request.GetResponseAsync();
+
+            return response.GetResponseStream();
+        }
+
+        public static async Task<string> URLGet(string url)
+        {
+            Stream s = await URLGetStream(url);
+
+            StreamReader reader = new StreamReader(s);
+            return await reader.ReadToEndAsync();
+        }
+
+        public static async Task<byte[]> URLGetBytes(string url)
+        {
+            Stream s = await URLGetStream(url);
+
+            using (var memoryStream = new MemoryStream())
+            {
+                s.CopyTo(memoryStream);
+                return memoryStream.ToArray();
+            }
+        }
+
         public async Task CheckUpdate()
         {
             Latest = null;
@@ -166,9 +195,7 @@ namespace INGota.FOTA
             { 
                 SetStatus(OTAStatus.Checking);
                 await ReadDevVer();
-                var client = new HttpClient();
-                client.Timeout = new TimeSpan(0, 0, 5);
-                var response = await client.GetStringAsync(updateURL + "latest.json");
+                var response = await URLGet(updateURL + "latest.json");
                 Latest = JsonConvert.DeserializeObject<Version>(response);
                 if ((Latest == null) || (Local == null))
                     throw new Exception("error");
@@ -178,7 +205,7 @@ namespace INGota.FOTA
                     return;
                 }
 
-                var bytes = await client.GetByteArrayAsync(updateURL + Latest.package);
+                var bytes = await URLGetBytes(updateURL + Latest.package);
                 await DecodePackage(bytes);
                 MakeFlashProcedure();
                 if ((Bins.Count > 0) && (Entry > 0))

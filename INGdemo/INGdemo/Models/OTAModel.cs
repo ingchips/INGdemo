@@ -28,7 +28,7 @@ namespace INGota.Models
         internal Label VersionInfo;
         internal Label Summary;
         internal bool DetailVisible;
-        string FOTA_SERVER = "http://192.168.100.101/fota/";
+        string FOTA_SERVER = "http://192.168.100.102/thermo/";
         static public Guid GUID_SERVICE = new Guid("3345c2f0-6f36-45c5-8541-92f56728d5f3");
         static public Guid GUID_CHAR_OTA_VER = new Guid("3345c2f1-6f36-45c5-8541-92f56728d5f3");
         static public Guid GUID_CHAR_OTA_CTRL = new Guid("3345c2f2-6f36-45c5-8541-92f56728d5f3");
