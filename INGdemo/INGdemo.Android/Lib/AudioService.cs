@@ -20,7 +20,7 @@ namespace INGdemo.Lib.Droid
     {
         AudioTrack Track;
 
-        public void Play()
+        public void Play(int samplingRate)
         {
             if (Track != null)
                 Stop();
@@ -31,10 +31,10 @@ namespace INGdemo.Lib.Droid
                     .Build(),
                 new AudioFormat.Builder()
                     .SetEncoding(Android.Media.Encoding.Pcm16bit)
-                    .SetSampleRate(AudioConfig.SampleRate)
+                    .SetSampleRate(samplingRate)
                     .SetChannelMask(ChannelOut.Mono)
                     .Build(),
-                AudioConfig.SampleRate * 2 / 5,
+                samplingRate * 2 / 5,
                 AudioTrackMode.Stream,
                 1);
             Track.Play();

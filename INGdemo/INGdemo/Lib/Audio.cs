@@ -8,13 +8,8 @@ namespace INGdemo.Lib
     public interface IPCMAudio
     {
         bool Write(Int16[] samples);
-        void Play();
+        void Play(int samplingRate);
         void Stop();
-    }
-
-    public class AudioConfig
-    {
-        public static readonly int SampleRate = 16000;
     }
 
     class ADPCMState

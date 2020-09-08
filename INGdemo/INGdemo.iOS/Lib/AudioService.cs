@@ -36,12 +36,12 @@ namespace INGdemo.Lib.iOS
         int RawCur;
         AudioStreamPacketDescription[] Descriptions = new AudioStreamPacketDescription[1];
 
-        void Init()
+        void Init(int samplingRate)
         {
             var interleaved = false;
             var desc = new AudioStreamBasicDescription()
             {
-                SampleRate = AudioConfig.SampleRate,
+                SampleRate = samplingRate,
                 Format = AudioFormatType.LinearPCM,
                 FormatFlags = AudioFormatFlags.LinearPCMIsSignedInteger | AudioFormatFlags.LinearPCMIsPacked,
                 BitsPerChannel = 16,
@@ -152,12 +152,12 @@ namespace INGdemo.Lib.iOS
             return true;
         }
 
-        public void Play()
+        public void Play(int samplingRate)
         {
             if (OutputQueue != null)
                 Stop();
 
-            Init();
+            Init(samplingRate);
             if (OutputQueue != null)
                 OutputQueue.Start();
         }

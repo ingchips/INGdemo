@@ -311,6 +311,7 @@ namespace INGdemo.Models
         int CurrentGain = 0;
         Button BtnTalk;
         Picker EnginePicker;
+        Picker SamplingRatePicker;
         Label STTResult;
 
         List<short> AllSamples;
@@ -360,6 +361,12 @@ namespace INGdemo.Models
             EnginePicker.Items.Add("Google (普通话)");
             EnginePicker.Items.Add("Google (English)");
 
+            SamplingRatePicker = new Picker { Title = "Select" };
+            SamplingRatePicker.Items.Add("16000");
+            SamplingRatePicker.Items.Add("32000");
+            SamplingRatePicker.SelectedIndex = 0;
+            SamplingRatePicker.SelectedIndexChanged += SamplingRatePicker_SelectedIndexChanged;
+
             STTResult = new Label();
             STTResult.Style = Device.Styles.BodyStyle;
             STTResult.HorizontalOptions = LayoutOptions.FillAndExpand;
@@ -370,6 +377,8 @@ namespace INGdemo.Models
             layout.Children.Add(BtnTalk);
             layout.Children.Add(labelInfo);
             layout.Children.Add(MakeSlider("Gain", out Gain));
+            layout.Children.Add(new Label { Text = "Sampling Rate", Style = Device.Styles.SubtitleStyle });
+            layout.Children.Add(SamplingRatePicker);
             layout.Children.Add(label);
             layout.Children.Add(new Label { Text = "Speech Recognition Engine", Style = Device.Styles.SubtitleStyle });
             layout.Children.Add(EnginePicker);
@@ -385,10 +394,17 @@ namespace INGdemo.Models
             Title = SERVICE_NAME;
         }
 
+        private void SamplingRatePicker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            EnginePicker.IsEnabled = SamplingRatePicker.SelectedIndex == 0;
+        }
+
         async private void BtnTalk_Released(object sender, EventArgs e)
         {
             await charCtrl.WriteAsync(new byte[1] { CMD_MIC_CLOSE });
             Player.Stop();
+
+            if (SamplingRatePicker.SelectedIndex != 0) return;
 
             ISpeechRecognition engine;
 
@@ -422,8 +438,9 @@ namespace INGdemo.Models
 
         async private void BtnTalk_Pressed(object sender, EventArgs e)
         {
+            int samplingRate = int.Parse(SamplingRatePicker.SelectedItem.ToString());
             Decoder.Reset();
-            Player.Play();
+            Player.Play(samplingRate);
             AllSamples.Clear();
             await charCtrl.WriteAsync(new byte[1] { CMD_MIC_OPEN });
         }
@@ -464,7 +481,8 @@ namespace INGdemo.Models
 
         private void CharOutput_ValueUpdated(object sender, Plugin.BLE.Abstractions.EventArgs.CharacteristicUpdatedEventArgs e)
         {
-            Decoder.Decode(e.Characteristic.Value);
+            if (Decoder != null)
+                Decoder.Decode(e.Characteristic.Value);
             Device.BeginInvokeOnMainThread(() =>
                 label.Text = Utils.ByteArrayToString(e.Characteristic.Value)
             );
@@ -473,7 +491,7 @@ namespace INGdemo.Models
         public AudioViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
             AllSamples = new List<short>();
-            Decoder = new ADPCMDecoder(AudioConfig.SampleRate / 10);
+            Decoder = new ADPCMDecoder(32000 / 10);
             Player = DependencyService.Get<IPCMAudio>();
             BleDevice = ADevice;
             InitUI();
