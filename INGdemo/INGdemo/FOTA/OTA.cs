@@ -25,8 +25,6 @@ namespace INGota.FOTA
         internal const int FLASH_BASE   = 0x4000;
         internal const int FLASH_SIZE   = 512 * 1024;
         internal const int FLASH_PAGE_SIZE = 8 * 1024;
-        internal const int FLASH_INFO_BASE = 0x84000;
-        internal const int FLASH_OTA_PAGE = FLASH_INFO_BASE + FLASH_PAGE_SIZE;
     }
 
     internal class Version
@@ -72,7 +70,6 @@ namespace INGota.FOTA
         const int FLASH_BASE = Ing91800.FLASH_BASE;
         const int FLASH_SIZE = Ing91800.FLASH_SIZE;
         const int FLASH_PAGE_SIZE = Ing91800.FLASH_PAGE_SIZE;
-        const int FLASH_OTA_PAGE = Ing91800.FLASH_OTA_PAGE;
         const int OTA_UPDATE_FLAG = 0x5A5A5A5A;
         const int OTA_LOCK_FLAG = 0x5A5A5A5A;
         const int FLASH_OTA_DATA_HIGH = Ing91800.FLASH_BASE + Ing91800.FLASH_SIZE;
@@ -87,6 +84,7 @@ namespace INGota.FOTA
         const int OTA_CTRL_PAGE_END = 0xB1; // param: no
         const int OTA_CTRL_READ_PAGE = 0xC0; // param: page address
         const int OTA_CTRL_SWITCH_APP = 0xD0; // param: no
+        const int OTA_CTRL_METADATA = 0xE0; // param: ota_meta_t
         const int OTA_CTRL_REBOOT = 0xFF; // param: no
 
         string FUpdateURL;
@@ -109,6 +107,7 @@ namespace INGota.FOTA
         Version Latest;
 
         List<OTABin> Bins;
+        OTABin MetaData;
         int Entry;
 
         public OTA(string url, IBleDriver driver)
@@ -125,8 +124,6 @@ namespace INGota.FOTA
 
         public string LocalVersion { get { return Local != null ? Local.ToString() : "n/a"; } }
         public string LatestVersion { get { return Latest != null ? Latest.ToString() : "n/a"; } }
-
-        public bool LockSysAfterUpdate { get; set; }
 
         void SetStatus(OTAStatus value)
         {
@@ -291,28 +288,24 @@ namespace INGota.FOTA
                 b.WriteAddress = addr;
             }
 
-            var update = new byte [(1 + 4 * Bins.Count + 4) * 4];
+            var update = new byte [2 + 4 + Bins.Count * 4 * 3];
 
-            Utils.WriteLittle(0, update, 0); // mark end
-            int c = 4;
+            int c = 2;
+            Utils.WriteLittle((UInt32)Entry, update, c); c += 4;
             foreach (var b in Bins)
             {
-                Utils.WriteLittle((UInt32)b.Data.Length, update, c); c += 4;
-                Utils.WriteLittle((UInt32)b.LoadAddress, update, c); c += 4;
                 Utils.WriteLittle((UInt32)b.WriteAddress, update, c); c += 4;
-                Utils.WriteLittle(OTA_UPDATE_FLAG, update, c); c += 4;
+                Utils.WriteLittle((UInt32)b.LoadAddress, update, c); c += 4; 
+                Utils.WriteLittle((UInt32)b.Data.Length, update, c); c += 4;                              
             }
 
-            Utils.WriteLittle(LockSysAfterUpdate ? (UInt32)OTA_LOCK_FLAG : (UInt32)0, update, c); c += 4;
-            Utils.WriteLittle((UInt32)Entry, update, c); c += 4;
-            Utils.WriteLittle(OTA_UPDATE_FLAG, update, c); c += 4;
-            Utils.WriteLittle((UInt32)Entry, update, c);
+            var crc = Utils.Crc(update.AsSpan(2).ToArray());
+            update[0] = (byte)(crc & 0xff);
+            update[1] = (byte)(crc >> 8);
 
-            var meta = new OTABin();
-            meta.WriteAddress = FLASH_OTA_PAGE + FLASH_PAGE_SIZE - update.Length;
-            meta.Data = update;
-            meta.Name = "meta";
-            Bins.Add(meta);
+            MetaData = new OTABin();
+            MetaData.Data = update;
+            MetaData.Name = "metadata";
         }
 
         async Task<bool> CheckDevStatus()
@@ -384,6 +377,20 @@ namespace INGota.FOTA
             }            
         }
 
+        async Task<bool> BurnMetaData()
+        {
+            var progress = new ProgressArgs() { Status = UpdateStatus.Running };
+
+            SendProgress(progress, String.Format("burn {0} ...", MetaData.Name));
+
+            var cmd = new byte[1 + MetaData.Data.Length];
+            cmd[0] = OTA_CTRL_METADATA;
+            Array.Copy(MetaData.Data, 0, cmd, 1, MetaData.Data.Length);
+
+            if (!await driver.WriteCtrl(cmd)) return false;
+            return await CheckDevStatus();
+        }
+
         async Task<bool> BurnFiles()
         {
             var progress = new ProgressArgs() { Status = UpdateStatus.Running };
@@ -451,6 +458,8 @@ namespace INGota.FOTA
             SendProgress(progress, "FOTA successfully enabled");
             if (!await BurnFiles())
                 throw new Exception("burn failed");
+            if (!await BurnMetaData())
+                throw new Exception("metadata failed");
             SendProgress(progress, "FOTA burn complete, reboot...");
             await driver.WriteCtrl(new byte[] { OTA_CTRL_REBOOT });
             return true;
