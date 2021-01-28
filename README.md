@@ -12,7 +12,7 @@ Use Visual Studio 2017/2019 to open the solution and build it.
 
 Note: `secrets.json` under the shared project is used to contain secrets, Web API keys, etc.
 Currently this app uses Tecent/Google API for speech recognization. To build this app, 
-create one like this (keys are optional for building):
+install Mobile.BuildTools and create one like this (keys are optional for building):
 
 ```javascript
 {
