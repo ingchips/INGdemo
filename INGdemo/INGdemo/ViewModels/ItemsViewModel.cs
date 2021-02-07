@@ -101,10 +101,12 @@ namespace INGota.ViewModels
             }
             else
             {
+                
                 if (dev.BLEAdvSimpleInfos.Count < 1) return;
                 var i = Items.IndexOf(old);
-                Items.RemoveAt(i);
-                Items.Insert(i, dev);
+                Items[i] = dev;
+                //Items.RemoveAt(i);
+               // Items.Insert(i, dev);
             }
         }
 

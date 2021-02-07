@@ -122,16 +122,6 @@ namespace INGdemo.Lib.iOS
                         buff.IsInUse = true;
                     }
 
-                    /* ok, let's write "safe" code without type information
-                    unsafe
-                    {
-                        AudioQueueBuffer* buf = (AudioQueueBuffer*)buff.Data;
-                        buf->CopyToAudioData(RawBuffer, BufferSizeInByte);
-                        buf->AudioDataByteSize = (uint)BufferSizeInByte;
-                    }
-                    OutputQueue.EnqueueBuffer(buff.Data, null);
-                    */
-
                     AudioQueue.FillAudioData(buff.Data, 0, RawBuffer, 0, BufferSizeInByte);
                     OutputQueue.EnqueueBuffer(buff.Data, BufferSizeInByte, null);
                     

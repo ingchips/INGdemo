@@ -42,13 +42,6 @@ namespace INGota.Views
 
         private void ViewModel_ItemsChangedEvent(object sender, EventArgs e)
         {
-            switch (Device.RuntimePlatform)
-            {
-                case Device.UWP:
-                    ItemsListView.ItemsSource = null;
-                    ItemsListView.ItemsSource = viewModel.Items;
-                    break;
-            }
         }
 
         private void DeviceDisconnected()
@@ -113,7 +106,14 @@ namespace INGota.Views
             if ((BleDevice != null) && (BleDevice.State == DeviceState.Connected))
             {
                 disc = true;
-                adapter.DisconnectDeviceAsync(BleDevice);
+                try
+                {
+                    adapter.DisconnectDeviceAsync(BleDevice);
+                }
+                catch (Exception)
+                {
+                }
+                
                 BleDevice = null;
             }
         }

@@ -470,9 +470,16 @@ namespace INGdemo.Models
             var this_size = await BleDevice.RequestMtuAsync(size);
             if (this_size < size)
             {
-                var msg = string.Format("Your BLE subsystem can't support required block size ({0} B).", this_size);
-                await DisplayAlert("Error", msg, "OK");
-                return;
+                if (this_size > 0)
+                {
+                    var msg = string.Format("Your BLE subsystem can't support required block size ({0} B).", this_size);
+                    await DisplayAlert("Error", msg, "OK");
+                    return;
+                }
+                else
+                {
+                    await DisplayAlert("Warning", "Failed to request MTU exchange\nVoice data might be corrupted.", "OK");
+                }
             }
             BleDevice.UpdateConnectionInterval(ConnectionInterval.High);
             charOutput.ValueUpdated += CharOutput_ValueUpdated;

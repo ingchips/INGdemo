@@ -24,8 +24,6 @@ namespace INGdemo.Models
         static public string SERVICE_NAME = "INGChips Console Service";
         static public string ICON_STR = Char.ConvertFromUtf32(0x1F4BB);
 
-        internal static string MonoFamily;
-
         Editor DataLog;
         Entry Input;
         Button BtnSend;
@@ -59,7 +57,7 @@ namespace INGdemo.Models
 
             DataLog = new Editor
             {                
-                FontFamily = MonoFamily,
+                FontFamily = Utils.GetMonoFamily(),
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 HorizontalOptions = LayoutOptions.Fill,
                 HeightRequest = -1
@@ -117,20 +115,6 @@ namespace INGdemo.Models
 
         public ConsoleViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
-            MonoFamily = "Courier";
-            switch (Device.RuntimePlatform)
-            {
-                case Device.iOS:
-                    MonoFamily = "Menlo";
-                    break;
-                case Device.Android:
-                    MonoFamily = "Droid Sans Mono";
-                    break;
-                case Device.UWP:
-                    MonoFamily = "Consolas";
-                    break;
-            }
-
             BleDevice = ADevice;
             InitUI();
             service = services.First((s) => s.Id == GUID_SERVICE);

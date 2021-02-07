@@ -5,6 +5,8 @@ using System.Linq;
 
 using Plugin.BLE.Abstractions;
 using Plugin.BLE.Abstractions.Contracts;
+using Xamarin.Forms;
+using System.Globalization;
 
 namespace INGota.FOTA
 {
@@ -207,6 +209,25 @@ namespace INGota.FOTA
             return r;
         }
 
+        static public string GetMonoFamily()
+        {
+            var MonoFamily = "Courier";
+            switch (Device.RuntimePlatform)
+            {
+                case Device.iOS:
+                    MonoFamily = "Menlo";
+                    break;
+                case Device.Android:
+                    // Lots of androids don't have this *standard* mono font
+                    //MonoFamily = "Droid Sans Mono";
+                    break;
+                case Device.UWP:
+                    MonoFamily = "Consolas";
+                    break;
+            }
+            return MonoFamily;
+        }
+
         static readonly byte[] auchCRCHi = new byte[]
         {
             0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40,
@@ -260,6 +281,46 @@ namespace INGota.FOTA
             }
 
             return (UInt16)(hi << 8 | lo);
+        }
+
+        public static byte[] ParseBytes(string str)
+        {
+            var l = new List<byte>();
+            foreach (var s in str.Split(new char[] { ',', ';', ' ', ':', '\n'}))
+            {
+                byte value;
+                if (byte.TryParse(s, NumberStyles.HexNumber,
+                                    CultureInfo.CurrentCulture,
+                                    out value))
+                    l.Add(value);
+            }
+            return l.ToArray();
+        }
+
+        public static string PrintHexTable(byte []v)
+        {
+            var rows = (v.Length + 15) / 16;
+            var r = new string[rows + 2];
+            r[0] = " 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  | 0123456789ABCDEF";
+            r[1] = "-------------------------------------------------------------------";
+            for (var i = 0; i < rows; i++)
+            {
+                StringBuilder str = new StringBuilder("                                                   ................");
+                for (var j = 0; j < 16; j++)
+                {
+                    var k = i * 16 + j;
+                    if (k >= v.Length) break;
+                    var b = string.Format("{0:X2}", v[k]);
+                    str[j * 3 + 0] = b[0];
+                    str[j * 3 + 1] = b[1];
+                    if ((0x20 <= v[k]) && (v[k] <= 0x7e))
+                    {
+                        str[16 * 3 + 3 + j] = char.ConvertFromUtf32(v[k])[0];
+                    }
+                }
+                r[i + 2] = str.ToString();
+            }
+            return string.Join("\n", r);
         }
     }
 }

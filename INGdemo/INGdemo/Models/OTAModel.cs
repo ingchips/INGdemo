@@ -232,7 +232,7 @@ namespace INGota.Models
                     try
                     {
                         BleDevice.UpdateConnectionInterval(ConnectionInterval.High);
-                        int MtuSize = await BleDevice.RequestMtuAsync(512);
+                        int MtuSize = await BleDevice.RequestMtuAsync(250);
                         r = await ota.Update(Math.Max(23, MtuSize - 4));
                     }
                     finally

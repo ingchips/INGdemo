@@ -125,15 +125,21 @@ namespace INGdemo.Models
             if (item == null)
                 return;
             var guid = new Guid(item.UUID);
-
+            Page p;
             Type t = FindViewer(guid);
             if (t != null)
             {
-                Page p = (Page)t.InvokeMember(t.Name, BindingFlags.Public |
+                p = (Page)t.InvokeMember(t.Name, BindingFlags.Public |
                         BindingFlags.Instance | BindingFlags.CreateInstance,
                         null, null, new object[] { BleDevice, services });
-                Navigation.PushAsync(p);
+                
             }
+            else
+            {
+                p = new GenericServiceView(BleDevice, services.First((s) => s.Id == guid));
+            }
+
+            Navigation.PushAsync(p);
         }
 
         static public string IconOfService(Guid guid)

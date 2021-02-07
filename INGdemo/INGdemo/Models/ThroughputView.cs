@@ -32,6 +32,7 @@ namespace INGdemo.Models
         Label CurM2STpt;
         Label CurS2MTpt;
         Label MtuInfo;
+        Entry MtuInput;
         Button BtnStart;
         Button BtnStop;
         Button BtnS2MStart;
@@ -120,13 +121,32 @@ namespace INGdemo.Models
             toolbar3.Spacing = 20;
             toolbar3.Children.Add(BtnS2MStart);
             toolbar3.Children.Add(BtnS2MStop);
-            
-
-            MtuInfo.Style = Device.Styles.CaptionStyle;
-            MtuInfo.HorizontalOptions = LayoutOptions.Center;
 
             layout.Children.Add(InitSpeed());
-            layout.Children.Add(MtuInfo);
+
+            switch (Device.RuntimePlatform)
+            {
+                case Device.UWP:
+                    var container = new StackLayout();
+                    var label = new Label();
+                    label.Text = "MTU (Bytes): ";
+                    label.Style = Device.Styles.CaptionStyle;
+                    label.VerticalTextAlignment = TextAlignment.Center;
+                    MtuInput = new Entry();
+                    MtuInput.Text = "200";
+                    container.Orientation = StackOrientation.Horizontal;
+                    container.Margin = 10;
+                    container.Children.Add(label);
+                    container.Children.Add(MtuInput);
+                    layout.Children.Add(container);
+                    break;
+                default:
+                    MtuInfo.Style = Device.Styles.CaptionStyle;
+                    MtuInfo.HorizontalOptions = LayoutOptions.Center;
+                    layout.Children.Add(MtuInfo);
+                    break;
+            }
+
             layout.Children.Add(toolbar2);
             layout.Children.Add(toolbar3);
             layout.Children.Add(new Label
@@ -169,7 +189,7 @@ namespace INGdemo.Models
             model.Series.Add(TptM2SSeries);
             model.Series.Add(TptS2MSeries);
             layout.Children.Add(TptView);
-                  
+
             layout.Margin = 20;
             layout.Spacing = 10;
             layout.VerticalOptions = LayoutOptions.Fill;
@@ -313,8 +333,17 @@ namespace INGdemo.Models
                 charOutput.ValueUpdated += CharOutput_ValueUpdated;
             }
 
-            MtuSize = Math.Max(Utils.BLE_MIN_MTU_SIZE, await BleDevice.RequestMtuAsync(200) - 3);
-            MtuInfo.Text = string.Format("MTU = {0} B", MtuSize);
+            switch (Device.RuntimePlatform)
+            {
+                case Device.UWP:
+                    MtuSize = int.Parse(MtuInput.Text);
+                    break;
+                default:
+                    MtuSize = Math.Max(Utils.BLE_MIN_MTU_SIZE, await BleDevice.RequestMtuAsync(200) - 3);
+                    MtuInfo.Text = string.Format("MTU = {0} B {1}", MtuSize);
+                    break;
+            }
+
             BleDevice.UpdateConnectionInterval(ConnectionInterval.High);
         }
 
