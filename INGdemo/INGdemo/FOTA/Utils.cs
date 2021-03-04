@@ -286,7 +286,7 @@ namespace INGota.FOTA
         public static byte[] ParseBytes(string str)
         {
             var l = new List<byte>();
-            foreach (var s in str.Split(new char[] { ',', ';', ' ', ':', '\n'}))
+            foreach (var s in str.Split(new char[] { ',', ';', ' ', ':', '\n', '\r' }))
             {
                 byte value;
                 if (byte.TryParse(s, NumberStyles.HexNumber,
