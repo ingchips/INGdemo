@@ -15,6 +15,8 @@ using Plugin.BLE.Abstractions;
 using INGota.FOTA;
 using INGdemo.Models;
 
+using Xamarin.Essentials;
+
 namespace INGota.Models
 {
     class ThermoFOTAViewer : ContentPage
@@ -22,6 +24,7 @@ namespace INGota.Models
         IDevice BleDevice;
         internal ActivityIndicator RunningInd;
         internal Button Action;
+        internal Button SelectLocal;
         internal StackLayout UpdateInfo;
         internal Label LocalVersion;
         internal Label LatestVersion;
@@ -60,9 +63,16 @@ namespace INGota.Models
             };
             btn.Pressed += Btn_Pressed;
 
-            container.Children.Add(new BoxView());
+            SelectLocal = new Button();
 
+            SelectLocal.Text = "Local File";
+            SelectLocal.HorizontalOptions = LayoutOptions.End;
+            SelectLocal.VerticalOptions = LayoutOptions.Center;
+            SelectLocal.Clicked += SelectLocal_Clicked;
+
+            container.Children.Add(new BoxView());
             container.Children.Add(BuildSummary());
+            container.Children.Add(SelectLocal);
             container.Children.Add(BuidUpdateInfo());
 
             container.Children.Add(new BoxView());
@@ -105,9 +115,28 @@ namespace INGota.Models
             container.HorizontalOptions = LayoutOptions.Fill;
             container.Children.Add(RunningInd);
             container.Children.Add(Summary);
-            container.Children.Add(Action);
+            container.Children.Add(Action);            
 
             return container;
+        }
+
+        async private void SelectLocal_Clicked(object sender, EventArgs e)
+        {
+            try
+            {
+                var result = await FilePicker.PickAsync();
+                if (result != null)
+                {
+                    var stream = await result.OpenReadAsync();
+                    var bytes = new byte[stream.Length];
+                    await stream.ReadAsync(bytes, 0, bytes.Length);
+                    await ota.CheckUpdateLocal(bytes);
+                }
+            }
+            catch (Exception ex)
+            {
+                // The user canceled or something went wrong
+            }
         }
 
         View BuidUpdateInfo()

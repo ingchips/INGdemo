@@ -181,6 +181,31 @@ namespace INGota.FOTA
             }
         }
 
+        async Task CheckZipPack(byte []bytes)
+        {
+            SetStatus(OTAStatus.Checking);
+            await DecodePackage(bytes);
+            MakeFlashProcedure();
+            if ((Bins.Count > 0) && (Entry > 0))
+                SetStatus(OTAStatus.UpdateAvailable);
+            else
+                SetStatus(OTAStatus.ServerError);
+        }
+
+        async public Task CheckUpdateLocal(byte[] bytes)
+        {
+            try
+            {
+                SetStatus(OTAStatus.Checking);
+                await ReadDevVer();
+                await CheckZipPack(bytes);
+            }
+            catch
+            {
+                SetStatus(OTAStatus.ServerError);
+            }
+        }
+
         public async Task CheckUpdate()
         {
             Latest = null;
@@ -202,13 +227,7 @@ namespace INGota.FOTA
                     return;
                 }
 
-                var bytes = await URLGetBytes(updateURL + Latest.package);
-                await DecodePackage(bytes);
-                MakeFlashProcedure();
-                if ((Bins.Count > 0) && (Entry > 0))
-                    SetStatus(OTAStatus.UpdateAvailable);
-                else
-                    SetStatus(OTAStatus.ServerError);
+                await CheckZipPack(await URLGetBytes(updateURL + Latest.package));
             }
             catch
             {
@@ -265,10 +284,23 @@ namespace INGota.FOTA
                     Entry = manifest.entry;
                 }
 
-                if (ToUniqueNum(Local.platform) != ToUniqueNum(Latest.platform))
-                    await AddBin(archive, (string)manifest.platform.name, (int)manifest.platform.address);
+                if (Latest == null)
+                {
+                    Latest = new Version();
+                    for (int i = 0; i < Latest.app.Length; i++)
+                        Latest.app[i] = (int)manifest.app.version[i];
+                    for (int i = 0; i < Latest.platform.Length; i++)
+                        Latest.platform[i] = (int)manifest.platform.version[i];
+                }
 
-                if (ToUniqueNum(Local.app) != ToUniqueNum(Latest.app))
+                bool up_platform = false;
+                if (ToUniqueNum(Local.platform) != ToUniqueNum(Latest.platform))
+                {
+                    up_platform = true;
+                    await AddBin(archive, (string)manifest.platform.name, (int)manifest.platform.address);
+                }
+
+                if (up_platform || (ToUniqueNum(Local.app) != ToUniqueNum(Latest.app)))
                     await AddBin(archive, (string)manifest.app.name, (int)manifest.app.address);
 
                 foreach (dynamic x in manifest.bins)
