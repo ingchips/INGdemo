@@ -304,7 +304,7 @@ namespace INGota.FOTA
                     await AddBin(archive, (string)manifest.app.name, (int)manifest.app.address);
 
                 foreach (dynamic x in manifest.bins)
-                    await AddBin(archive, (string)x.name, x.address);
+                    await AddBin(archive, (string)x.name, (int)x.address);
             }
         }
 
