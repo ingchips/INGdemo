@@ -24,9 +24,9 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;</DefineConstants>
+    <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AndroidLinkMode>None</AndroidLinkMode>
@@ -34,6 +34,7 @@
     <EnableLLVM>false</EnableLLVM>
     <BundleAssemblies>false</BundleAssemblies>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,7 +42,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>2</WarningLevel>
+    <WarningLevel>1</WarningLevel>
     <AndroidManagedSymbols>true</AndroidManagedSymbols>
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <AotAssemblies>false</AotAssemblies>
@@ -53,6 +54,8 @@
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableMultiDex>false</AndroidEnableMultiDex>
     <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Mono.Android" />

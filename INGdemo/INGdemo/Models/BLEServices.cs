@@ -195,6 +195,14 @@ namespace INGdemo.Models
             {
                 source.CancelAfter(5000);
                 await adapter.ConnectToDeviceAsync(BleDevice, cancellationToken: token);
+                switch (Device.RuntimePlatform)
+                {
+                    case Device.Android:
+                        await BleDevice.RequestMtuAsync(200);
+                        break;
+                    default:
+                        break;
+                }
                 Wait.Message = "discovering...";
                 services = await BleDevice.GetServicesAsync();
 
