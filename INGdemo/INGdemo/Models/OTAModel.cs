@@ -15,8 +15,6 @@ using Plugin.BLE.Abstractions;
 using INGota.FOTA;
 using INGdemo.Models;
 
-using Xamarin.Essentials;
-
 namespace INGota.Models
 {
     class ThermoFOTAViewer : ContentPage

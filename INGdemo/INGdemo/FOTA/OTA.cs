@@ -8,19 +8,18 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net;
-using System.Security.Cryptography;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Asn1.Sec;
-using Org.BouncyCastle.Crypto.Digests;
-using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.Crypto.Agreement;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Crypto.Signers;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Asn1.Sec;
 
 namespace INGota.FOTA
 {
@@ -88,8 +87,6 @@ namespace INGota.FOTA
         public byte[] xor_key;
         public bool is_secure_fota;
 
-        System.Security.Cryptography.ECCurve curve = System.Security.Cryptography.ECCurve.CreateFromFriendlyName("secP256r1");
-
         public static T[] SubArray<T>(T[] array, int offset, int length)
         {
             T[] result = new T[length];
@@ -99,33 +96,49 @@ namespace INGota.FOTA
 
         public KeyUtils()
         {
-            var session = ECDsa.Create();
-            session.GenerateKey(curve);
-            var param = session.ExportParameters(true);
-            session_sk = param.D;
-            session_pk = param.Q.X.Concat(param.Q.Y).ToArray();
+            var conf = new ECKeyGenerationParameters(SecObjectIdentifiers.SecP256r1, new SecureRandom());
+            var keyGen = new ECKeyPairGenerator("ECDSA");
+            keyGen.Init(conf);
+
+            var keyPair = keyGen.GenerateKeyPair();
+            session_sk = ((ECPrivateKeyParameters)keyPair.Private).D.ToByteArrayUnsigned();
+            var pk = (ECPublicKeyParameters)keyPair.Public;
+            session_pk = pk.Q.XCoord.ToBigInteger().ToByteArrayUnsigned().Concat(pk.Q.YCoord.ToBigInteger().ToByteArrayUnsigned()).ToArray();
             is_secure_fota = false;
         }
 
         public byte [] SignData(byte []sk, byte[]data)
         {
-            var sa = ECDsa.Create(new ECParameters
-            {
-                Curve = curve,
-                D = sk,
-                Q =
-                {
-                    X = SubArray(root_pk, 0, 32),
-                    Y = SubArray(root_pk, 32, 32),
-                }
-            });
-            return sa.SignData(data, 0, data.Length, HashAlgorithmName.SHA256);
+            var curve = NistNamedCurves.GetByName("P-256");
+            var ecParam = new ECDomainParameters(curve.Curve, curve.G, curve.N, curve.H, curve.GetSeed());
+            var privKey = new ECPrivateKeyParameters(new BigInteger(1, sk), ecParam);
+
+            var hash = SHA256(data);
+            var sa = new ECDsaSigner();
+            sa.Init(true, privKey);
+            var sig = sa.GenerateSignature(hash);
+            var b1 = sig[0].ToByteArrayUnsigned();
+            var b2 = sig[1].ToByteArrayUnsigned();
+            var r = new byte[b1.Length + b2.Length];
+            Array.Copy(b1, 0, r, 0, b1.Length);
+            Array.Copy(b2, 0, r, b1.Length, b2.Length);
+            return r;
         }
 
         public void Encrypt(byte []data)
         {
             for (int i = 0; i < data.Length; i++)
                 data[i] ^= xor_key[i & 0x1f];
+        }
+
+        public static byte[] SHA256(byte []data)
+        {
+            var bcsha256a = new Sha256Digest();
+            bcsha256a.BlockUpdate(data, 0, data.Length);
+
+            byte[] checksum = new byte[32];
+            bcsha256a.DoFinal(checksum, 0);
+            return checksum;
         }
 
         public static byte[] getSharedSecret(byte[] PrivateKeyIn, byte[] PublicKeyIn)
@@ -135,7 +148,6 @@ namespace INGota.FOTA
             ECDomainParameters ecParam = null;
             ECPrivateKeyParameters privKey = null;
             ECPublicKeyParameters pubKey = null;
-            Org.BouncyCastle.Math.EC.ECPoint point = null;
 
             curve = NistNamedCurves.GetByName("P-256");
             ecParam = new ECDomainParameters(curve.Curve, curve.G, curve.N, curve.H, curve.GetSeed());
@@ -268,7 +280,7 @@ namespace INGota.FOTA
             if (r)
             {
                 KeyUtils.shared_secret = KeyUtils.getSharedSecret(KeyUtils.session_sk, KeyUtils.peer_pk);
-                KeyUtils.xor_key = SHA256.Create().ComputeHash(KeyUtils.shared_secret);
+                KeyUtils.xor_key = KeyUtils.SHA256(KeyUtils.shared_secret);
                 KeyUtils.is_secure_fota = true; 
             }
             return r;
@@ -610,7 +622,7 @@ namespace INGota.FOTA
             Array.Copy(MetaData.Data, 0, cmd, 1, MetaData.Data.Length);
 
             if (!await driver.WriteCtrl(cmd)) return false;
-            return await CheckDevStatus();
+            return CurrentFlash.ManualReboot ? await CheckDevStatus() : true;
         }
 
         async Task<bool> BurnFiles()
