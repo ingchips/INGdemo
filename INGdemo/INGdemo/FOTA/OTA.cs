@@ -8,7 +8,19 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net;
-using OxyPlot;
+using System.Security.Cryptography;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Sec;
+using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Signers;
+using Org.BouncyCastle.Crypto.Agreement;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Asn1.Nist;
 
 namespace INGota.FOTA
 {
@@ -18,6 +30,21 @@ namespace INGota.FOTA
         internal int LoadAddress = 0;
         internal byte[] Data;
         internal string Name;
+    }
+
+    internal readonly struct FlashInfo
+    {
+        internal FlashInfo(UInt32 BaseAddr, UInt32 TotalSize, UInt32 PageSize, bool ManualReboot)
+        {
+            this.BaseAddr = BaseAddr;
+            this.TotalSize = TotalSize;
+            this.PageSize = PageSize;
+            this.ManualReboot = ManualReboot;
+        }
+        internal readonly UInt32 BaseAddr;
+        internal readonly UInt32 TotalSize;
+        internal readonly UInt32 PageSize;
+        internal readonly bool ManualReboot;
     }
 
     internal class Ing91800
@@ -41,9 +68,104 @@ namespace INGota.FOTA
         }
     }
 
+    internal class KeyUtils
+    {
+        public static byte[] root_sk = new byte[] {
+            0x5c, 0x77, 0x17, 0x11, 0x67, 0xd6, 0x40, 0xa3, 0x36, 0x0d, 0xe2,
+            0x69, 0xfe, 0x0b, 0xb7, 0x8f, 0x5e, 0x94, 0xd8, 0xf2, 0xf4, 0x80,
+            0x94, 0x0a, 0xc2, 0xf2, 0x6e, 0x43, 0xbb, 0x69, 0x5f, 0xa7};
+        public static byte[] root_pk = new byte[] {
+            0x14, 0x1b, 0x0b, 0x28, 0x46, 0xc4, 0xaf, 0x97, 0x41, 0x59, 0x97, 
+            0x4f, 0x17, 0x52, 0xe0, 0x1c, 0x9a, 0xea, 0x21, 0xc7, 0xc6, 0xe3, 
+            0x04, 0x30, 0x4f, 0x8d, 0x9c, 0xf0, 0x7f, 0x1d, 0x1f, 0x0a, 0x83, 
+            0xaf, 0x76, 0xe0, 0x4d, 0xc1, 0xcc, 0x96, 0xb4, 0xb8, 0x3f, 0xbb, 
+            0x73, 0x6c, 0x66, 0x3f, 0x0b, 0xdf, 0x52, 0x86, 0xbf, 0x60, 0xe8, 
+            0x91, 0x27, 0x00, 0x85, 0xc8, 0xbf, 0x55, 0xa8, 0x96};
+        public byte[] session_pk;
+        public byte[] session_sk;
+        public byte[] peer_pk;
+        public byte[] shared_secret;
+        public byte[] xor_key;
+        public bool is_secure_fota;
+
+        System.Security.Cryptography.ECCurve curve = System.Security.Cryptography.ECCurve.CreateFromFriendlyName("secP256r1");
+
+        public static T[] SubArray<T>(T[] array, int offset, int length)
+        {
+            T[] result = new T[length];
+            Array.Copy(array, offset, result, 0, length);
+            return result;
+        }
+
+        public KeyUtils()
+        {
+            var session = ECDsa.Create();
+            session.GenerateKey(curve);
+            var param = session.ExportParameters(true);
+            session_sk = param.D;
+            session_pk = param.Q.X.Concat(param.Q.Y).ToArray();
+            is_secure_fota = false;
+        }
+
+        public byte [] SignData(byte []sk, byte[]data)
+        {
+            var sa = ECDsa.Create(new ECParameters
+            {
+                Curve = curve,
+                D = sk,
+                Q =
+                {
+                    X = SubArray(root_pk, 0, 32),
+                    Y = SubArray(root_pk, 32, 32),
+                }
+            });
+            return sa.SignData(data, 0, data.Length, HashAlgorithmName.SHA256);
+        }
+
+        public void Encrypt(byte []data)
+        {
+            for (int i = 0; i < data.Length; i++)
+                data[i] ^= xor_key[i & 0x1f];
+        }
+
+        public static byte[] getSharedSecret(byte[] PrivateKeyIn, byte[] PublicKeyIn)
+        {
+            ECDHCBasicAgreement agreement = new ECDHCBasicAgreement();
+            X9ECParameters curve = null;
+            ECDomainParameters ecParam = null;
+            ECPrivateKeyParameters privKey = null;
+            ECPublicKeyParameters pubKey = null;
+            Org.BouncyCastle.Math.EC.ECPoint point = null;
+
+            curve = NistNamedCurves.GetByName("P-256");
+            ecParam = new ECDomainParameters(curve.Curve, curve.G, curve.N, curve.H, curve.GetSeed());
+            privKey = new ECPrivateKeyParameters(new BigInteger(1, PrivateKeyIn), ecParam);
+
+            BigInteger X = new BigInteger(1, PublicKeyIn, 0, 32);
+            BigInteger Y = new BigInteger(1, PublicKeyIn, 32, 32);
+
+            pubKey = new ECPublicKeyParameters(curve.Curve.ValidatePoint(X, Y), ecParam);
+
+            agreement.Init(privKey);
+
+            BigInteger secret = agreement.CalculateAgreement(pubKey);
+
+            return secret.ToByteArrayUnsigned();
+        }
+    }
+
     class OTA
     {
         int OTA_BLOCK_SIZE = 20;
+
+        FlashInfo[] FlashInfos = new FlashInfo[]
+        {
+             new FlashInfo(0x4000U, 512 * 1024, 8 * 1024, true),        // ING9188
+             new FlashInfo(0x4000U, 256 * 1024, 8 * 1024, true),        // ING9186
+             new FlashInfo(0x02000000U, 2048 * 1024, 4 * 1024, false),  // ING9168
+        };
+
+        FlashInfo CurrentFlash;
 
         public enum UpdateStatus
         {
@@ -61,18 +183,20 @@ namespace INGota.FOTA
 
         public enum OTAStatus
         {
+            Idle,
             Checking,
             UpToDate,
             UpdateAvailable,
             ServerError
         }
 
-        const int FLASH_BASE = Ing91800.FLASH_BASE;
-        const int FLASH_SIZE = Ing91800.FLASH_SIZE;
-        const int FLASH_PAGE_SIZE = Ing91800.FLASH_PAGE_SIZE;
+        int FLASH_BASE { get { return (int)CurrentFlash.BaseAddr; } }
+        int FLASH_SIZE { get { return (int)CurrentFlash.TotalSize; } }
+        int FLASH_PAGE_SIZE { get { return (int)CurrentFlash.PageSize; } }
+        int FLASH_OTA_DATA_HIGH { get { return (int)CurrentFlash.BaseAddr + (int)CurrentFlash.TotalSize; } }
+
         const int OTA_UPDATE_FLAG = 0x5A5A5A5A;
-        const int OTA_LOCK_FLAG = 0x5A5A5A5A;
-        const int FLASH_OTA_DATA_HIGH = Ing91800.FLASH_BASE + Ing91800.FLASH_SIZE;
+        const int OTA_LOCK_FLAG = 0x5A5A5A5A;        
 
         const int OTA_CTRL_STATUS_DISABLED = 0;
         const int OTA_CTRL_STATUS_OK = 1;
@@ -88,6 +212,7 @@ namespace INGota.FOTA
         const int OTA_CTRL_REBOOT = 0xFF; // param: no
 
         string FUpdateURL;
+        KeyUtils KeyUtils;
 
         public string updateURL { get { return FUpdateURL; }
             set
@@ -101,7 +226,7 @@ namespace INGota.FOTA
         public event EventHandler<ProgressArgs> Progress;
         public event EventHandler<OTAStatus> StatusChanged;
 
-        OTAStatus status = OTAStatus.Checking;
+        OTAStatus status = OTAStatus.Idle;
 
         Version Local;
         Version Latest;
@@ -115,6 +240,7 @@ namespace INGota.FOTA
             updateURL = url;
             this.driver = driver;
             Bins = new List<OTABin>();
+            KeyUtils = new KeyUtils();
         }
 
         public bool Available { get { return driver.Available; } }
@@ -133,8 +259,26 @@ namespace INGota.FOTA
             StatusChanged.Invoke(this, status);
         }
 
+        async Task<bool> ExchangeKeys()
+        {
+            KeyUtils.peer_pk = await driver.ReadPubKey();
+            var sig = KeyUtils.SignData(KeyUtils.root_sk, KeyUtils.session_pk);
+            if (!await driver.WritePubKey(KeyUtils.session_pk.Concat(sig).ToArray())) return false;            
+            var r = (await ReadStatus()) != OTA_CTRL_STATUS_ERROR;
+            if (r)
+            {
+                KeyUtils.shared_secret = KeyUtils.getSharedSecret(KeyUtils.session_sk, KeyUtils.peer_pk);
+                KeyUtils.xor_key = SHA256.Create().ComputeHash(KeyUtils.shared_secret);
+                KeyUtils.is_secure_fota = true; 
+            }
+            return r;
+        }
+
         async Task ReadDevVer()
         {
+            if (driver.IsSecure && !(await ExchangeKeys()))
+                return;
+
             var v = await driver.ReadVer();
             if ((v == null) || (v.Length < 6))
                 return;
@@ -186,14 +330,19 @@ namespace INGota.FOTA
             SetStatus(OTAStatus.Checking);
             await DecodePackage(bytes);
             MakeFlashProcedure();
-            if ((Bins.Count > 0) && (Entry > 0))
+            if (Bins.Count > 0)
                 SetStatus(OTAStatus.UpdateAvailable);
             else
-                SetStatus(OTAStatus.ServerError);
+                SetStatus(OTAStatus.UpToDate);
         }
 
-        async public Task CheckUpdateLocal(byte[] bytes)
+        async public Task CheckUpdateLocal(int series, byte[] bytes)
         {
+            Latest = null;
+            Local = null;
+            CurrentFlash = FlashInfos[series];
+            Bins.Clear();
+            Entry = 0;
             try
             {
                 SetStatus(OTAStatus.Checking);
@@ -206,10 +355,11 @@ namespace INGota.FOTA
             }
         }
 
-        public async Task CheckUpdate()
+        public async Task CheckUpdate(int series)
         {
             Latest = null;
             Local = null;
+            CurrentFlash = FlashInfos[series];
             Bins.Clear();
             Entry = 0;
             
@@ -331,9 +481,25 @@ namespace INGota.FOTA
                 Utils.WriteLittle((UInt32)b.Data.Length, update, c); c += 4;                              
             }
 
-            var crc = Utils.Crc(update.AsSpan(2).ToArray());
-            update[0] = (byte)(crc & 0xff);
-            update[1] = (byte)(crc >> 8);
+            if (KeyUtils.is_secure_fota)
+            {
+                var sig = KeyUtils.SignData(KeyUtils.session_sk, update.AsSpan(2).ToArray());
+                var new_update = new byte[sig.Length + update.Length];
+                Array.Copy(sig, 0, new_update, 0, sig.Length);
+                var enc_data = update.AsSpan(2).ToArray();
+                KeyUtils.Encrypt(enc_data);
+                Array.Copy(enc_data, 0, new_update, sig.Length + 2, enc_data.Length);
+                var crc = Utils.Crc(enc_data);
+                new_update[sig.Length + 0] = (byte)(crc & 0xff);
+                new_update[sig.Length + 1] = (byte)(crc >> 8);
+                update = new_update;
+            }
+            else
+            {
+                var crc = Utils.Crc(update.AsSpan(2).ToArray());
+                update[0] = (byte)(crc & 0xff);
+                update[1] = (byte)(crc >> 8);
+            }
 
             MetaData = new OTABin();
             MetaData.Data = update;
@@ -375,8 +541,21 @@ namespace INGota.FOTA
             Progress.Invoke(this, e);
         }
 
-        async Task<bool> BurnPage(ProgressArgs progress,  byte[]page, Action<int> onProgress)
-        {            
+        async Task<bool> BurnPage(ProgressArgs progress,  byte[]page, Action<int> onProgress, UInt32 address)
+        {
+            byte [] sig = null;
+            if (KeyUtils.is_secure_fota)
+            {
+                sig = KeyUtils.SignData(KeyUtils.session_sk, page);
+                KeyUtils.Encrypt(page);
+            }
+
+            var cmd = new byte[] { OTA_CTRL_PAGE_BEGIN, 0, 0, 0, 0 };
+            Utils.WriteLittle(address, cmd, 1);
+
+            if (!await driver.WriteCtrl(cmd)) return false;
+            if (!await CheckDevStatus()) return false;
+
             int current = 0;
             while (current < page.Length)
             {
@@ -390,15 +569,26 @@ namespace INGota.FOTA
                 await Task.Delay(Math.Max(1, (OTA_BLOCK_SIZE + 3) / 4 * 34 / 1000));  // 34us per 4 byte
             }
 
-            var cmd = new byte[] { OTA_CTRL_PAGE_END, 0, 0, 0, 0 };
-            uint param = (uint)(Utils.Crc(page) << 16 | page.Length);
-            Utils.WriteLittle(param, cmd, 1);
-
+            if (KeyUtils.is_secure_fota)
+            {
+                cmd = new byte[1 + 4 + sig.Length];
+                cmd[0] = OTA_CTRL_PAGE_END;
+                uint param = (uint)(Utils.Crc(page) << 16 | page.Length);
+                Utils.WriteLittle(param, cmd, 1);
+                Array.Copy(sig, 0, cmd, 5, sig.Length);
+            }
+            else
+            {
+                cmd = new byte[] { OTA_CTRL_PAGE_END, 0, 0, 0, 0 };
+                uint param = (uint)(Utils.Crc(page) << 16 | page.Length);
+                Utils.WriteLittle(param, cmd, 1);
+            }
+            
             if (!await driver.WriteCtrl(cmd)) return false;
 
             while (true)
             {
-                await Task.Delay(10);
+                await Task.Delay(KeyUtils.is_secure_fota ? 200 : 10);
                 switch (await ReadStatus())
                 {
                     case OTA_CTRL_STATUS_ERROR: 
@@ -439,12 +629,6 @@ namespace INGota.FOTA
                 {
                     SendProgress(progress, String.Format("prepare new page for {0} ...", b.Name));
 
-                    var cmd = new byte[] { OTA_CTRL_PAGE_BEGIN, 0, 0, 0, 0 };
-                    Utils.WriteLittle((UInt32)(offset + b.WriteAddress), cmd, 1);
-
-                    if (!await driver.WriteCtrl(cmd)) return false;
-                    if (!await CheckDevStatus()) return false;
-
                     var page = new byte[Math.Min(FLASH_PAGE_SIZE, b.Data.Length - offset)];
                     Array.Copy(b.Data, offset, page, 0, page.Length);
 
@@ -453,7 +637,7 @@ namespace INGota.FOTA
                     else
                         SendProgress(progress, String.Format("burn {0} ...", b.Name));
 
-                    if (await BurnPage(progress, page, onProgress))
+                    if (await BurnPage(progress, page, onProgress, (UInt32)(offset + b.WriteAddress)))
                     {
                         offset += page.Length;
                         written += page.Length;
@@ -493,7 +677,8 @@ namespace INGota.FOTA
             if (!await BurnMetaData())
                 throw new Exception("metadata failed");
             SendProgress(progress, "FOTA burn complete, reboot...");
-            await driver.WriteCtrl(new byte[] { OTA_CTRL_REBOOT });
+            if (CurrentFlash.ManualReboot)
+                await driver.WriteCtrl(new byte[] { OTA_CTRL_REBOOT });
             return true;
         }
 

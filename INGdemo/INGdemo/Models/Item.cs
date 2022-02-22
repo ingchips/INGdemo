@@ -111,26 +111,15 @@ namespace INGdemo.Models
 
             Connectable = Utils.IsConnectable(Device.AdvertisementRecords);
 
-            if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(Thermometer.GUID_SERVICE) >= 0)
-                IconString = Thermometer.ICON_STR;
-            else if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(LEDViewer.GUID_SERVICE) >= 0)
-                IconString = LEDViewer.ICON_STR;
-            else if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(BatteryViewer.GUID_SERVICE) >= 0)
-                IconString = BatteryViewer.ICON_STR;
-            else if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(RSCViewer.GUID_SERVICE) >= 0)
-                IconString = RSCViewer.ICON_STR;
-            else if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(HeartRateViewer.GUID_SERVICE) >= 0)
-                IconString = HeartRateViewer.ICON_STR;
-            else if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(ETagViewer.GUID_SERVICE) >= 0)
-                IconString = ETagViewer.ICON_STR;
-            else if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(ConsoleViewer.GUID_SERVICE) >= 0)
-                IconString = ConsoleViewer.ICON_STR;
-            else if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(ThroughputViewer.GUID_SERVICE) >= 0)
-                IconString = ThroughputViewer.ICON_STR;
-            else if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(ThermoFOTAViewer.GUID_SERVICE) >= 0)
-                IconString = ThermoFOTAViewer.ICON_STR;
-            else if (Utils.GetServices(Device.AdvertisementRecords).IndexOf(DeviceInfoViewer.GUID_SERVICE) >= 0)
-                IconString = DeviceInfoViewer.ICON_STR;
+            foreach (var service in Utils.GetServices(Device.AdvertisementRecords))
+            {
+                var s = BLEServices.GetServiceIcon(service);
+                if (s != null)
+                {
+                    IconString = s;
+                    break;
+                }
+            }
 
             if (iBeacon.valid)
             {

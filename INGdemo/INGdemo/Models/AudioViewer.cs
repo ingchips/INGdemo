@@ -30,6 +30,11 @@ using INGdemo.Helpers;
 
 namespace INGdemo.Models
 {
+    class SpeechRecognitionSettings
+    {
+        public static int SAMPLE_RATE = 16000;
+    }
+
     interface ISpeechRecognition
     {
         Task<string> Recognize(short[] samples);
@@ -204,7 +209,7 @@ namespace INGdemo.Models
 
             uint numsamples = (uint)samples.Length;
             ushort samplelength = 2; // in bytes
-            uint samplerate = 16000;
+            int samplerate = SpeechRecognitionSettings.SAMPLE_RATE;
 
             var payload = new MemoryStream();
             var wr = new BinaryWriter(payload);
@@ -280,7 +285,7 @@ namespace INGdemo.Models
             var api = new TencentAiPlatform(app_id, app_key);
 
             return await api.GetAaiWxAsrs(samples, RandomString(16),
-                1, 1, 16000, 16, 0, 1);
+                1, 1, SpeechRecognitionSettings.SAMPLE_RATE, 16, 0, 1);
         }
     }
 
@@ -362,9 +367,11 @@ namespace INGdemo.Models
             EnginePicker.Items.Add("Google (English)");
 
             SamplingRatePicker = new Picker { Title = "Select" };
+            SamplingRatePicker.Items.Add("8000");
             SamplingRatePicker.Items.Add("16000");
+            SamplingRatePicker.Items.Add("24000");
             SamplingRatePicker.Items.Add("32000");
-            SamplingRatePicker.SelectedIndex = 0;
+            SamplingRatePicker.SelectedIndex = 1;
             SamplingRatePicker.SelectedIndexChanged += SamplingRatePicker_SelectedIndexChanged;
 
             STTResult = new Label();
@@ -396,7 +403,7 @@ namespace INGdemo.Models
 
         private void SamplingRatePicker_SelectedIndexChanged(object sender, EventArgs e)
         {
-            EnginePicker.IsEnabled = SamplingRatePicker.SelectedIndex == 0;
+            EnginePicker.IsEnabled = int.Parse(SamplingRatePicker.SelectedItem.ToString()) == SpeechRecognitionSettings.SAMPLE_RATE;
         }
 
         async private void BtnTalk_Released(object sender, EventArgs e)

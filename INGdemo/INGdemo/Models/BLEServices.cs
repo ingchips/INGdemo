@@ -91,9 +91,7 @@ namespace INGdemo.Models
             Title = (BleDevice.Name?.Length > 0) ? "Services of " + BleDevice.Name : "Services";
         }
 
-        static private Type FindViewer(Guid guid)
-        {
-            Type[] viewers = new Type[]
+        static Type[] viewers = new Type[]
             {
                 typeof(GAPViewer),
                 typeof(DeviceInfoViewer),
@@ -110,13 +108,27 @@ namespace INGdemo.Models
                 typeof(ConsoleViewer),
                 typeof(AudioViewer),
                 typeof(PianoViewer),
-                typeof(DirFindingViewer),
                 typeof(SmartHomeViewer),
+                typeof(MusicPlayerViewer),
             };
-
+        static private Type FindViewer(Guid guid)
+        {
             return viewers.FirstOrDefault((t) => 
                         guid.Equals((Guid)t.GetField("GUID_SERVICE", BindingFlags.Static | BindingFlags.Public)
                                            .GetValue(null)));
+        }
+
+        static public string GetServiceIcon(Guid guid)
+        {
+            Type x = viewers.FirstOrDefault((t) =>
+                        guid.Equals((Guid)t.GetField("GUID_SERVICE", BindingFlags.Static | BindingFlags.Public)
+                                           .GetValue(null)));
+            if (x != null)
+            {
+                return (string)x.GetField("ICON_STR", BindingFlags.Static | BindingFlags.Public).GetValue(null);
+            }
+            else
+                return null;
         }
 
         private void ListView_ItemTapped(object sender, ItemTappedEventArgs e)

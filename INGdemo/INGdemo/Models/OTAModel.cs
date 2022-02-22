@@ -36,6 +36,7 @@ namespace INGota.Models
         static public Guid GUID_CHAR_OTA_VER = new Guid("3345c2f1-6f36-45c5-8541-92f56728d5f3");
         static public Guid GUID_CHAR_OTA_CTRL = new Guid("3345c2f2-6f36-45c5-8541-92f56728d5f3");
         static public Guid GUID_CHAR_OTA_DATA = new Guid("3345c2f3-6f36-45c5-8541-92f56728d5f3");
+        static public Guid GUID_CHAR_OTA_PUBKEY = new Guid("3345c2f4-6f36-45c5-8541-92f56728d5f3");
         static public string SERVICE_NAME = "INGChips FOTA Service";
         static public string ICON_STR = Char.ConvertFromUtf32(0x1F680);
 
@@ -43,18 +44,63 @@ namespace INGota.Models
         IBleDriver driver;
         WaitActivity Wait;
         Entry urlInput;
+        Picker seriesPicker;
 
-        void InitUI()
+        async void InitUI(IDevice ADevice, IReadOnlyList<IService> services)
         {
+            Title = SERVICE_NAME;
+
+            await driver.Init(ADevice, services);
+
+            var page = new ContentPage();
             var container = new StackLayout();
             var server = new Label();
             server.Text = "FOTA Server";
             server.Style = Device.Styles.TitleStyle;
+
+            var secureInfo = new Label();
+            
+            secureInfo.Style = Device.Styles.CaptionStyle;
+            secureInfo.TextColor = Color.White;
+            secureInfo.HorizontalTextAlignment = TextAlignment.Center;
+            secureInfo.VerticalTextAlignment = TextAlignment.Center;
+            if (driver.IsSecure)
+            {
+                secureInfo.Text = "SECURE";
+                secureInfo.BackgroundColor = Color.DeepSkyBlue;
+                var mtu = await ADevice.RequestMtuAsync(200);
+                if (mtu < 150)
+                {
+                    await DisplayAlert("Alert",
+                        String.Format("MTU is too small ({0}). This will not work.", mtu),
+                        "OK");
+                }
+            }
+            else
+            {
+                secureInfo.Text = "UNSECURE";
+                secureInfo.BackgroundColor = Color.Orange;
+            }
+
             urlInput = new Entry();
             urlInput.Text = FOTA_SERVER;
 
+            seriesPicker = new Picker { Title = "Select Chip Series:" };
+            seriesPicker.Items.Add("ING9188xx/ING9187xx");
+            seriesPicker.Items.Add("ING9186xx/ING9185xx");
+            seriesPicker.Items.Add("ING9168xx");
+            seriesPicker.SelectedIndex = 0;
+            seriesPicker.HorizontalOptions = LayoutOptions.FillAndExpand;
+
+            var seriesCont = new StackLayout();
+            seriesCont.Orientation = StackOrientation.Horizontal;
+            seriesCont.Children.Add(seriesPicker);
+            seriesCont.Children.Add(secureInfo);
+            seriesCont.HorizontalOptions = LayoutOptions.FillAndExpand;
+
             container.Margin = 10;
-            container.Children.Add(server);
+            container.Children.Add(seriesCont); 
+            container.Children.Add(server);            
             container.Children.Add(urlInput);
 
             var btn = new Button
@@ -78,8 +124,16 @@ namespace INGota.Models
             container.Children.Add(new BoxView());
             container.Children.Add(btn);
 
-            Title = SERVICE_NAME;
             Content = new ScrollView { Content = container };
+
+            var tapGestureRecognizer = new TapGestureRecognizer();
+
+            tapGestureRecognizer.NumberOfTapsRequired = 1;
+            tapGestureRecognizer.Tapped += Summary_Tapped;
+
+            Summary.GestureRecognizers.Add(tapGestureRecognizer);
+            Summary_Tapped(null, null);
+            Action.Clicked += Action_Clicked;
         }
 
         private async void Btn_Pressed(object sender, EventArgs e)
@@ -101,7 +155,7 @@ namespace INGota.Models
             Summary.HorizontalOptions = LayoutOptions.StartAndExpand;
 
             RunningInd = new ActivityIndicator();
-            RunningInd.IsRunning = true;
+            RunningInd.IsRunning = false;
             RunningInd.Color = Color.Blue;
             RunningInd.VerticalOptions = LayoutOptions.Center;
 
@@ -130,7 +184,7 @@ namespace INGota.Models
                     var stream = await result.OpenReadAsync();
                     var bytes = new byte[stream.Length];
                     await stream.ReadAsync(bytes, 0, bytes.Length);
-                    await ota.CheckUpdateLocal(bytes);
+                    await ota.CheckUpdateLocal(seriesPicker.SelectedIndex, bytes);
                 }
             }
             catch (Exception ex)
@@ -175,24 +229,12 @@ namespace INGota.Models
             if (BleDevice == null)
                 return;
 
-            driver = new BleDriver(GUID_SERVICE, GUID_CHAR_OTA_VER, GUID_CHAR_OTA_CTRL, GUID_CHAR_OTA_DATA);
+            driver = new BleDriver(GUID_SERVICE, GUID_CHAR_OTA_VER, GUID_CHAR_OTA_CTRL, GUID_CHAR_OTA_DATA, GUID_CHAR_OTA_PUBKEY);
             ota = new OTA(FOTA_SERVER, driver);
             ota.StatusChanged += Ota_StatusChanged;
             ota.Progress += Ota_Progress;
 
-            InitUI();
-
-            var tapGestureRecognizer = new TapGestureRecognizer();
-
-            tapGestureRecognizer.NumberOfTapsRequired = 1;
-            tapGestureRecognizer.Tapped += Summary_Tapped;
-
-            Summary.GestureRecognizers.Add(tapGestureRecognizer);
-            Summary_Tapped(null, null);
-            Action.Clicked += Action_Clicked;
-
-            driver.Init(ADevice, services);
-            ota.CheckUpdate();
+            InitUI(ADevice, services);     
         }
 
         private void Summary_Tapped(object sender, EventArgs e)
@@ -216,6 +258,11 @@ namespace INGota.Models
 
             switch (ota.Status)
             {
+                case OTA.OTAStatus.Idle:
+                    Summary.Text = "Please Check";
+                    UpdateInfo.IsVisible = false;
+                    Action.Text = "Re-check";
+                    break;
                 case OTA.OTAStatus.Checking:
                     Summary.Text = "Checking";
                     UpdateInfo.IsVisible = false;
@@ -250,8 +297,9 @@ namespace INGota.Models
             {
                 case OTA.OTAStatus.ServerError:
                 case OTA.OTAStatus.UpToDate:
+                case OTA.OTAStatus.Idle:
                     ota.updateURL = urlInput.Text;
-                    await ota.CheckUpdate();
+                    await ota.CheckUpdate(seriesPicker.SelectedIndex);
                     break;
                 case OTA.OTAStatus.UpdateAvailable:
                     Wait = new WaitActivity();
