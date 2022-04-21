@@ -361,10 +361,10 @@ namespace INGdemo.Models
             BtnTalk.Released += BtnTalk_Released;
 
             EnginePicker = new Picker { Title = "Select" };
-            EnginePicker.Items.Add("(Off)");
-            EnginePicker.Items.Add("Tencent AI Open Platform");
+            EnginePicker.Items.Add("(Off)");            
             EnginePicker.Items.Add("Google (普通话)");
             EnginePicker.Items.Add("Google (English)");
+            //EnginePicker.Items.Add("Tencent AI Open Platform");
 
             SamplingRatePicker = new Picker { Title = "Select" };
             SamplingRatePicker.Items.Add("8000");
@@ -411,19 +411,16 @@ namespace INGdemo.Models
             await charCtrl.WriteAsync(new byte[1] { CMD_MIC_CLOSE });
             Player.Stop();
 
-            if (SamplingRatePicker.SelectedIndex != 0) return;
+            if (int.Parse(SamplingRatePicker.SelectedItem.ToString()) != SpeechRecognitionSettings.SAMPLE_RATE) return;
 
             ISpeechRecognition engine;
 
             switch (EnginePicker.SelectedIndex)
             {
                 case 1:
-                    engine = new TecentAiRecognizer();
-                    break;
-                case 2:
                     engine = new GoogleRecognizer("cmn-Hans-CN");
                     break;
-                case 3:
+                case 2:
                     engine = new GoogleRecognizer("en-US");
                     break;
                 default:
