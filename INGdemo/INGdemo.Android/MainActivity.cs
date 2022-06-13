@@ -32,11 +32,12 @@ namespace INGota.Droid
             OxyPlot.Xamarin.Forms.Platform.Android.PlotViewRenderer.Init();
 
             LoadApplication(new App());
-            GetLocationPermissionAsync();
 
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
 
             CrossCurrentActivity.Current.Init(this, savedInstanceState);
+
+            GetAllPermissions();
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
@@ -44,24 +45,48 @@ namespace INGota.Droid
             Plugin.Permissions.PermissionsImplementation.Current.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         }
 
-        async Task GetLocationPermissionAsync()
+        void DoGetPermission(string[] items, int code)
         {
-            const string permission = Manifest.Permission.AccessCoarseLocation;
+            RequestPermissions(items, code);
+        }
 
-            if ((int)Build.VERSION.SdkInt < 23)
+        async void GetPermission(string[] items, int code, string prompt)
+        {
+            if (CheckSelfPermission(items[0]) == (int)Permission.Granted)
                 return;
 
-            if (CheckSelfPermission(permission) == (int)Permission.Granted)
+            if (prompt.Length > 0)
             {
-                return;
+                var contentView = Xamarin.Essentials.Platform.CurrentActivity?.FindViewById(Android.Resource.Id.Content);
+                Snackbar.Make(contentView,
+                       prompt,
+                       Snackbar.LengthIndefinite)
+                .SetAction("OK",
+                            new Action<View>(delegate (View obj) {
+                                DoGetPermission(items, code);
+                            }
+                        )
+                ).Show();
             }
-
-            string[] PermissionsLocation =
+            else
             {
-                Manifest.Permission.AccessCoarseLocation
-            };
+                DoGetPermission(items, code);
+            }
+        }
 
-            RequestPermissions(PermissionsLocation, 0);
-        }      
+        void ShowToast(string text)
+        {
+            var context = Application.Context;
+            ToastLength duration = ToastLength.Short;
+
+            var toast = Toast.MakeText(context, text, duration);
+            toast.Show();
+        }
+
+        void GetAllPermissions()
+        {
+            GetPermission(new string[] { Manifest.Permission.AccessCoarseLocation, Manifest.Permission.AccessFineLocation }, 1, "Location must be allowed to access BLE.");
+
+        }
     }
 }
