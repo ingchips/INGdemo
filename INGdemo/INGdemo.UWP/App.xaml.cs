@@ -15,6 +15,11 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
+using OxyPlot.Xamarin.Forms;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Series;
+
 namespace INGdemo.UWP
 {
     /// <summary>
@@ -58,6 +63,8 @@ namespace INGdemo.UWP
                 rootFrame.NavigationFailed += OnNavigationFailed;
                 global::Xamarin.Forms.Forms.SetFlags("Shell_UWP_Experimental");
                 Xamarin.Forms.Forms.Init(e);
+
+                OxyPlot.Xamarin.Forms.Platform.UWP.PlotViewRenderer.Init();
 
                 if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
                 {

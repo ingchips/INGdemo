@@ -227,28 +227,31 @@ namespace INGdemo.Models
         async void ReadData()
         {
             bool error = false;
-            try
+            Device.BeginInvokeOnMainThread(async () =>
             {
-                Wait = new WaitActivity();
-                await Navigation.PushModalAsync(Wait);
-                await Connect();
-            }
-            catch (Exception e)
-            {
-                await DisplayAlert("Alert", e.Message, "OK");
-                error = true;
-                return;
-            }
-            finally
-            {
-                await Navigation.PopModalAsync();
-            }
+                try
+                {
+                    Wait = new WaitActivity();
+                    await Navigation.PushModalAsync(Wait);
+                    await Connect();
+                }
+                catch (Exception e)
+                {
+                    await DisplayAlert("Alert", e.Message, "OK");
+                    error = true;
+                    return;
+                }
+                finally
+                {
+                    await Navigation.PopModalAsync();
+                }
 
-            if (error)
-            {
-                await Navigation.PopAsync();
-                return;
-            }
+                if (error)
+                {
+                    await Navigation.PopAsync();
+                    return;
+                }
+            });
         }
 
         protected override void OnAppearing()

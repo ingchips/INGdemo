@@ -120,8 +120,8 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="icons8-graph-50.png" />
-    <Content Include="icons8-search-50.png" />
+    <Content Include="icons8_graph_50.png" />
+    <Content Include="icons8_search_50.png" />
     <Content Include="icon_about.png" />
     <Content Include="icon_feed.png" />
     <Content Include="logo_cn_en.jpg" />
@@ -172,9 +172,12 @@
     <PackageReference Include="Microsoft.Toolkit.Uwp.Connectivity">
       <Version>6.1.1</Version>
     </PackageReference>
-    <PackageReference Include="Xamarin.Forms" Version="5.0.0.2012" />
-    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.2.12" />
-    <PackageReference Include="Xamarin.Essentials" Version="1.6.1" />
+    <PackageReference Include="SkiaSharp.Views">
+      <Version>2.88.2</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.Forms" Version="5.0.0.2515" />
+    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.2.14" />
+    <PackageReference Include="Xamarin.Essentials" Version="1.7.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\INGdemo\INGdemo.csproj">

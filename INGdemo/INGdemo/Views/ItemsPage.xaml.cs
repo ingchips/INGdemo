@@ -97,6 +97,7 @@ namespace INGota.Views
             sig.Orientation = StackOrientation.Vertical;
             sig.Padding = 0;
             sig.WidthRequest = 40;
+            sig.MinimumWidthRequest = 40;
 
             var cont2 = new StackLayout();
             cont2.Orientation = StackOrientation.Vertical;
@@ -150,11 +151,11 @@ namespace INGota.Views
 
             rssi = new Label();
             rssi.Style = Device.Styles.ListItemDetailTextStyle;
+            rssi.MinimumWidthRequest = 60;
 
             sig_cont.Children.Add(new Label
             {
                 Style = Device.Styles.ListItemTextStyle,
-                //FontSize = 15,
                 TextColor = Color.Blue,
                 Text = "📶 "
             });
@@ -162,7 +163,6 @@ namespace INGota.Views
             sig_cont.Children.Add(new Label
             {
                 Style = Device.Styles.ListItemTextStyle,
-                //FontSize = 15,
                 TextColor = Color.Orange,
                 Text = "   ⬌ "
             });
@@ -287,7 +287,9 @@ namespace INGota.Views
 
         public async Task ExecuteScan()
         {
-            if (IsBusy)
+            var adapter = CrossBluetoothLE.Current.Adapter;
+
+            if (adapter.IsScanning)
                 return;
 
             IsBusy = true;
@@ -297,7 +299,7 @@ namespace INGota.Views
                 DevListView.Children.Clear();
                 devicesUI.Clear();
 
-                var adapter = CrossBluetoothLE.Current.Adapter;
+                
                 adapter.ScanTimeout = 0x7fffffff;
 
                 switch (Device.RuntimePlatform)
@@ -351,7 +353,8 @@ namespace INGota.Views
             var dev = devicesUI[Id];
             disc = false;
             BleDevice = dev.dev.Device;
-            await Navigation.PushAsync(new BLEServices(BleDevice));
+            var page = new BLEServices(BleDevice);
+            await Navigation.PushAsync(page);
         }
 
         protected override void OnAppearing()
