@@ -107,6 +107,16 @@ namespace INGdemo.Models
                     if (iBeacon.valid)
                         iBeacon.UpdateDistance(Device.Rssi);
                 }
+
+                switch (x.Type)
+                {
+                    case AdvertisementRecordType.CompleteLocalName:
+                    case AdvertisementRecordType.ShortLocalName:
+                        HasAdvName = true;
+                        break;
+                    default:
+                        break;
+                }
             }
 
             Connectable = Utils.IsConnectable(Device.AdvertisementRecords);
@@ -137,6 +147,9 @@ namespace INGdemo.Models
         public string Address { get; }
         public string IconString { get; }
         public int RSSI { get; }
+
+        public bool HasAdvName { get; }
+
         public string Info { get
             {
                 if (iBeacon.valid)

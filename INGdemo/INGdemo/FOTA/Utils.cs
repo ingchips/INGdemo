@@ -7,6 +7,7 @@ using Plugin.BLE.Abstractions;
 using Plugin.BLE.Abstractions.Contracts;
 using Xamarin.Forms;
 using System.Globalization;
+using OxyPlot;
 
 namespace INGota.FOTA
 {
@@ -149,6 +150,8 @@ namespace INGota.FOTA
                     }
                     s.TrimEnd(new char []{'\n'});
                     return s;
+                case AdvertisementRecordType.TxPowerLevel:
+                    return string.Format("{0} dBm", (sbyte)(adv.Data[0]));
                 case AdvertisementRecordType.ShortLocalName:
                 case AdvertisementRecordType.CompleteLocalName:                    
                     return Encoding.UTF8.GetString(adv.Data);

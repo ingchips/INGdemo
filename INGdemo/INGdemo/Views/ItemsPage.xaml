@@ -1,64 +1,38 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="INGota.Views.ItemsPage"
-              Title="{Binding Title}"
-             x:Name="BrowseItemsPage">
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"            
+             Shell.PresentationMode="ModalAnimated"
+             Title="{Binding Title}"
+             xmlns:ios="clr-namespace:Xamarin.Forms.PlatformConfiguration.iOSSpecific;assembly=Xamarin.Forms.Core"
+             ios:Page.UseSafeArea="true"
+             x:Class="INGota.Views.ItemsPage">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Scan" Clicked="Scan_Clicked">
-            <ToolbarItem.Icon>
-                <OnPlatform x:TypeArguments="FileImageSource">
-                    <On Platform="UWP" Value="add.png"/>
-                </OnPlatform>
-            </ToolbarItem.Icon>
+        <ToolbarItem Text="Scan" Clicked="Scan_Clicked" IconImageSource="add.png">
         </ToolbarItem>
     </ContentPage.ToolbarItems>
 
     <StackLayout>
-        <ListView x:Name="ItemsListView"
-                ItemsSource="{Binding Items}"
-                VerticalOptions="FillAndExpand"
-                HasUnevenRows="true"
-                RefreshCommand="{Binding LoadItemsCommand}"
-                
-                IsRefreshing="{Binding IsBusy, Mode=OneWay}"
-                CachingStrategy="RecycleElement"
-                ItemSelected="OnItemSelected">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <ViewCell>
-                        <StackLayout Padding="10" Orientation="Horizontal">
-                            <Label Text="{Binding RSSI}" 
-                                    LineBreakMode="CharacterWrap" 
-                                    Style="{DynamicResource ListItemDetailTextStyle}" 
-                                    FontSize="13"
-                                    VerticalTextAlignment="Center"
-                                    WidthRequest="23"/>
-                            <Label Text="{Binding IconString}" 
-                                    LineBreakMode="NoWrap" 
-                                    Style="{DynamicResource ListItemTextStyle}" 
-                                    FontSize="30"
-                                    VerticalTextAlignment="Center"/>
-                            <StackLayout Padding="10"
-                                         HorizontalOptions="FillAndExpand">
-                                <Label Text="{Binding Name}" 
-                                    LineBreakMode="NoWrap" 
-                                    Style="{DynamicResource ListItemTextStyle}" 
-                                    FontSize="16" />
-                                <Label Text="{Binding Info}" 
-                                    LineBreakMode="CharacterWrap"
-                                    Style="{DynamicResource ListItemDetailTextStyle}"
-                                    FontSize="13" />
-                            </StackLayout>
-                            <Button Text="Connect"
-                                    HorizontalOptions="End"
-                                    IsVisible="{Binding Connectable}"
-                                    Clicked="Connect_Clicked"
-                                    CommandParameter="{Binding Id}"/>
-                        </StackLayout>
-                    </ViewCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <StackLayout Spacing="8">
+            <StackLayout Orientation="Horizontal"  Spacing="8" Margin="4">
+                <Label Text="Name" Style="{DynamicResource ListItemTextStyle}" VerticalTextAlignment="Center"></Label>
+                <Entry HorizontalOptions="FillAndExpand" 
+                       ClearButtonVisibility="WhileEditing"
+                       Margin="8" x:Name="NameFilter"></Entry>
+                <Label Text="Non-empty" Style="{DynamicResource ListItemTextStyle}" VerticalTextAlignment="Center"></Label>
+                <Switch VerticalOptions="Center" x:Name="NameNonEmpty"></Switch>
+            </StackLayout>
+            <StackLayout Orientation="Horizontal"  Spacing="8" Margin="4">
+                <Label Text="RSSI" Style="{DynamicResource ListItemTextStyle}" VerticalTextAlignment="Center"></Label>
+                <Slider Maximum="30" Minimum="-100" HorizontalOptions="FillAndExpand" Value="-95"  x:Name="RSSIThres" />
+                <Label Text="-95" Style="{DynamicResource ListSubItemTextStyle}" VerticalTextAlignment="Center" WidthRequest="40" x:Name="RSSIThresLabel"></Label>
+            </StackLayout>
+            <BoxView Color="Gray" HeightRequest="1"></BoxView>
+        </StackLayout>
+        <StackLayout VerticalOptions="FillAndExpand" Margin="4" Padding="8">
+            <ScrollView VerticalOptions="FillAndExpand">
+                <StackLayout x:Name="DevListView" Spacing="10">
+                </StackLayout>
+            </ScrollView>
+        </StackLayout>
     </StackLayout>
 </ContentPage>
