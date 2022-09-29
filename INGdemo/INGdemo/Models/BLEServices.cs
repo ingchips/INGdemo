@@ -198,7 +198,7 @@ namespace INGdemo.Models
                 switch (Device.RuntimePlatform)
                 {
                     case Device.Android:
-                        await BleDevice.RequestMtuAsync(200);
+                        await BleDevice.RequestMtuAsync(512);
                         break;
                     default:
                         break;

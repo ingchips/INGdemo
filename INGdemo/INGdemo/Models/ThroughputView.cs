@@ -339,7 +339,7 @@ namespace INGdemo.Models
                     MtuSize = int.Parse(MtuInput.Text);
                     break;
                 default:
-                    MtuSize = Math.Max(Utils.BLE_MIN_MTU_SIZE, await BleDevice.RequestMtuAsync(200) - 3);
+                    MtuSize = Math.Max(Utils.BLE_MIN_MTU_SIZE, await BleDevice.RequestMtuAsync(512) - 3);
                     MtuInfo.Text = string.Format("MTU = {0} B", MtuSize);
                     break;
             }
