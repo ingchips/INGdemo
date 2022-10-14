@@ -10,9 +10,9 @@ A crossplatform app demostrating BLE services.
 
 Use Visual Studio 2017/2019/2022 to open the solution and build it.
 
-Note: `secrets.json` under the shared project is used to contain secrets, Web API keys, etc.
-Currently this app uses Tecent/Google API for speech recognization. To build this app, 
-install Mobile.BuildTools and create one like this (keys are optional for building):
+Note: `secrets.json` under the shared project (_INGdemo/INGdemo/_) is used to contain secrets, Web API keys, etc.
+Currently this app uses Google API for speech recognization. To build this app,
+create a file like this (the file is required but keys are optional for building):
 
 ```javascript
 {
