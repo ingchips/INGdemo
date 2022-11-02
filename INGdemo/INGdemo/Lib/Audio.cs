@@ -7,11 +7,13 @@ namespace INGdemo.Lib
 {
     public interface IPCMAudio
     {
-        bool Write(Int16[] samples);
+        bool Write(short[] samples);
         void Play(int samplingRate);
         void Stop();
     }
 
+
+//----------------------------------------------------ADPCM编解码----------------------------------------------------------------
     class ADPCMState
     {
         internal Int16 predicated;
@@ -83,6 +85,7 @@ namespace INGdemo.Lib
             Update(sample);
             if (WriteIndex >= Buffer.Length)
             {
+                //数据满帧，将数据传出
                 PCMOutput.Invoke(this, Buffer);
                 WriteIndex = 0;
             }
@@ -174,5 +177,5 @@ namespace INGdemo.Lib
         {
             foreach (var x in data) Decode(x);
         }
-    }
+    }  
 }

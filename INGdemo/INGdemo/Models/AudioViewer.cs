@@ -28,11 +28,21 @@ using System.Net;
 using System.IO;
 using INGdemo.Helpers;
 
+//            
 namespace INGdemo.Models
 {
     class SpeechRecognitionSettings
     {
         public static int SAMPLE_RATE = 16000;
+    }
+
+    class AlgorithmRecognitionSettings
+    {
+        public static string Algorithm_SBC = "SBC";
+        public static string Algorithm_ADPCM = "ADPCM";
+        public static byte AUDIO_CODEC_MODE = 2; //default
+        readonly public static byte AUDIO_CODEC_ADPCM = 1;
+        readonly public static byte AUDIO_CODEC_SBC = 2;
     }
 
     interface ISpeechRecognition
@@ -48,7 +58,7 @@ namespace INGdemo.Models
         }
     }
 
-    internal class TencentAiPlatform
+    internal class TencentAiPlatform  //腾讯AI语音识别平台
     {
 
         static readonly string url_preffix = "https://api.ai.qq.com/fcgi-bin/";
@@ -150,6 +160,9 @@ namespace INGdemo.Models
             return new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
         }
 
+
+        //chunk 块
+        //异步处理函数：语音识别任务
         public async Task<string> GetAaiWxAsrs(short []chunk, 
                                   string speech_id, 
                                   int end_flag, 
@@ -159,7 +172,7 @@ namespace INGdemo.Models
             var Params = new JObject();
 
             int chunk_len = chunk.Length * 2;
-            var bytes = new byte[chunk_len];
+            var bytes = new byte[chunk_len];    //块长度
             Buffer.BlockCopy(chunk, 0, bytes, 0, bytes.Length);
             var speech_chunk = Convert.ToBase64String(bytes);
 
@@ -189,7 +202,7 @@ namespace INGdemo.Models
         }
     }
 
-    class GoogleRecognizer : ISpeechRecognition
+    class GoogleRecognizer : ISpeechRecognition   //谷歌AI语音识别
     {
 
         string Lang;
@@ -289,14 +302,14 @@ namespace INGdemo.Models
         }
     }
 
-    class AudioViewer : ContentPage
+    class AudioViewer : ContentPage    //内容页  添加控件以及控件相关的操作
     {
         static public Guid GUID_SERVICE = new Guid("00000001-494e-4743-4849-505355554944");
         static public Guid GUID_CHAR_CTRL = new Guid("bf83f3f1-399a-414d-9035-ce64ceb3ff67");
         static public Guid GUID_CHAR_OUT = new Guid("bf83f3f2-399a-414d-9035-ce64ceb3ff67");
-        static public Guid GUID_CHAR_INFO = new Guid("10000001-494e-4743-4849-505355554944");
+        static public Guid GUID_CHAR_INFO = new Guid("10000001-494e-4743-4849-505355554944");  //相对于GUID_SERVICE 只有第一位发生反转
         static public string SERVICE_NAME = "INGChips Voice Output Service";
-        static public string ICON_STR = Char.ConvertFromUtf32(0x1F3A4);
+        static public string ICON_STR = Char.ConvertFromUtf32(0x1F3A4);  //对应麦克风图标
 
         readonly byte CMD_DIGCMD_DIGITAL_GAIN = 0;
         readonly byte CMD_MIC_OPEN = 1;
@@ -310,6 +323,7 @@ namespace INGdemo.Models
         Label label;
         Label labelInfo;
         ADPCMDecoder Decoder;
+        SBCDecoder sbc_Decoder;
         IPCMAudio Player;
         Slider Gain;
         Label GainInd;
@@ -317,6 +331,7 @@ namespace INGdemo.Models
         Button BtnTalk;
         Picker EnginePicker;
         Picker SamplingRatePicker;
+        Picker AlgorithmPicker;
         Label STTResult;
 
         List<short> AllSamples;
@@ -338,12 +353,13 @@ namespace INGdemo.Models
             GainInd.HorizontalOptions = LayoutOptions.End;
             layout.Children.Add(GainInd);
 
+
             return layout;
         }
 
         void InitUI()
         {
-            var layout = new StackLayout();
+            var layout = new StackLayout();//整体布局
             label = new Label();
 
             labelInfo = new Label();
@@ -352,7 +368,7 @@ namespace INGdemo.Models
 
             BtnTalk = new Button
             {
-                Text = ICON_STR + "\nPress to Capture",               
+                Text = "         " + ICON_STR + "\nPress to Capture",               
                 CornerRadius = 50,
                 Style = Device.Styles.TitleStyle
             };
@@ -360,11 +376,19 @@ namespace INGdemo.Models
             BtnTalk.Pressed += BtnTalk_Pressed;
             BtnTalk.Released += BtnTalk_Released;
 
+            //语音识别功能选择区
             EnginePicker = new Picker { Title = "Select" };
             EnginePicker.Items.Add("(Off)");            
             EnginePicker.Items.Add("Google (普通话)");
             EnginePicker.Items.Add("Google (English)");
             //EnginePicker.Items.Add("Tencent AI Open Platform");
+
+            //算法模式选择区
+            AlgorithmPicker = new Picker { Title = "Select" };
+            AlgorithmPicker.Items.Add("ADPCM");
+            AlgorithmPicker.Items.Add("SBC");
+            AlgorithmPicker.SelectedIndex = 1;
+            AlgorithmPicker.SelectedIndexChanged += AlgorithmPicker_SelectedIndexChanged;
 
             SamplingRatePicker = new Picker { Title = "Select" };
             SamplingRatePicker.Items.Add("8000");
@@ -372,6 +396,7 @@ namespace INGdemo.Models
             SamplingRatePicker.Items.Add("24000");
             SamplingRatePicker.Items.Add("32000");
             SamplingRatePicker.SelectedIndex = 1;
+            //selectIndex属性值发生改变事件
             SamplingRatePicker.SelectedIndexChanged += SamplingRatePicker_SelectedIndexChanged;
 
             STTResult = new Label();
@@ -381,9 +406,15 @@ namespace INGdemo.Models
             label.HorizontalOptions = LayoutOptions.Center;
             label.FontSize = 10;
 
+            //麦克风按钮
             layout.Children.Add(BtnTalk);
             layout.Children.Add(labelInfo);
             layout.Children.Add(MakeSlider("Gain", out Gain));
+            //插入音频编解码算法选择
+            layout.Children.Add(label); // 空白label作为空行插入
+            layout.Children.Add(new Label { Text = "Algorithm", Style = Device.Styles.SubtitleStyle });
+            layout.Children.Add(AlgorithmPicker);
+            layout.Children.Add(label);
             layout.Children.Add(new Label { Text = "Sampling Rate", Style = Device.Styles.SubtitleStyle });
             layout.Children.Add(SamplingRatePicker);
             layout.Children.Add(label);
@@ -401,9 +432,31 @@ namespace INGdemo.Models
             Title = SERVICE_NAME;
         }
 
+        private void AlgorithmPicker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+            if (AlgorithmPicker.SelectedItem.ToString() == AlgorithmRecognitionSettings.Algorithm_SBC)
+            {
+                AlgorithmRecognitionSettings.AUDIO_CODEC_MODE = 2;
+                Reset();
+            }
+            else if(AlgorithmPicker.SelectedItem.ToString() == AlgorithmRecognitionSettings.Algorithm_ADPCM)
+            {
+                AlgorithmRecognitionSettings.AUDIO_CODEC_MODE = 1;
+                Reset();
+            }
+            else
+            {
+                AlgorithmRecognitionSettings.AUDIO_CODEC_MODE = 0;
+                DisplayAlert("Warning", "There is no such algorithm to match!.", "OK"); 
+            }
+
+
+        }
         private void SamplingRatePicker_SelectedIndexChanged(object sender, EventArgs e)
         {
             EnginePicker.IsEnabled = int.Parse(SamplingRatePicker.SelectedItem.ToString()) == SpeechRecognitionSettings.SAMPLE_RATE;
+            
         }
 
         async private void BtnTalk_Released(object sender, EventArgs e)
@@ -415,6 +468,7 @@ namespace INGdemo.Models
 
             ISpeechRecognition engine;
 
+            //判断AI语音识别引擎选择
             switch (EnginePicker.SelectedIndex)
             {
                 case 1:
@@ -432,8 +486,10 @@ namespace INGdemo.Models
             var samples = AllSamples.ToArray();
             try
             {
-                STTResult.Text = await engine.Recognize(samples);
+                string s = await engine.Recognize(samples);
+                STTResult.Text = s;  //语音转文字，并输入到最下方的文本框
             }
+            //catch捕捉try抛出的错误
             catch (Exception ex)
             {
                 STTResult.Text = "error: " + ex.Message;
@@ -442,10 +498,29 @@ namespace INGdemo.Models
 
         async private void BtnTalk_Pressed(object sender, EventArgs e)
         {
+            //按下麦克风采集键
+
             int samplingRate = int.Parse(SamplingRatePicker.SelectedItem.ToString());
-            Decoder.Reset();
-            Player.Play(samplingRate);
+            //识别音频编解码算法
+            string audioCodec = AlgorithmPicker.SelectedItem.ToString();
+            //选择解码器
+            switch(AlgorithmRecognitionSettings.AUDIO_CODEC_MODE)
+            {
+                case 1:
+                    Decoder.Reset();
+                    break;
+                case 2:
+                    sbc_Decoder.Reset();
+                    break;
+                default:
+                    await DisplayAlert("Warning", "Initialization error!.", "OK");
+                    break; 
+
+            }
+
+            Player.Play(samplingRate);//调用音频播放器接口函数
             AllSamples.Clear();
+            //启动音频输入异步处理函数
             await charCtrl.WriteAsync(new byte[1] { CMD_MIC_OPEN });
         }
 
@@ -492,22 +567,31 @@ namespace INGdemo.Models
 
         private void CharOutput_ValueUpdated(object sender, Plugin.BLE.Abstractions.EventArgs.CharacteristicUpdatedEventArgs e)
         {
-            if (Decoder != null)
+            System.Diagnostics.Debug.WriteLine("CharOutput_ValueUpdated()!");
+            if (Decoder != null && AlgorithmRecognitionSettings.AUDIO_CODEC_MODE == AlgorithmRecognitionSettings.AUDIO_CODEC_ADPCM)
+            {
+                System.Diagnostics.Debug.WriteLine("ADPCM_Decoder");
                 Decoder.Decode(e.Characteristic.Value);
+            }
+            else if (sbc_Decoder != null && AlgorithmRecognitionSettings.AUDIO_CODEC_MODE == AlgorithmRecognitionSettings.AUDIO_CODEC_SBC)
+            {
+                sbc_Decoder.Decode(e.Characteristic.Value);
+            }
+            
+
             Device.BeginInvokeOnMainThread(() =>
                 label.Text = Utils.ByteArrayToString(e.Characteristic.Value)
             );
         }
 
+        //析构函数
         public AudioViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
-            AllSamples = new List<short>();
-            Decoder = new ADPCMDecoder(32000 / 10);
-            Player = DependencyService.Get<IPCMAudio>();
+            Reset();
             BleDevice = ADevice;
             InitUI();
             service = services.First((s) => s.Id == GUID_SERVICE);
-            Decoder.PCMOutput += Decoder_PCMOutput;            
+            //Decoder.PCMOutput += Decoder_PCMOutput;            
             Read();
         }
 
@@ -517,11 +601,43 @@ namespace INGdemo.Models
             AllSamples.AddRange(e);
         }
 
+        private void Decoder_SBCOutput(object sender, byte[] e)
+        {
+            //单个数据类型转换
+            short[] se = new short[e.Length];
+            for (int i=0; i<e.Length; i++) 
+            {
+                se[i] = (short)(e[i]);
+            }
+            Player.Write(se);
+            AllSamples.AddRange(se);          
+        } 
+
         async protected override void OnDisappearing()
         {
             base.OnDisappearing();
             Player.Stop();
             if (BleDevice.State == DeviceState.Connected) await charOutput.StopUpdatesAsync();
         }
+
+        private void Reset()
+        {
+            //此种方法成功输出
+            System.Diagnostics.Debug.WriteLine("reset()!");
+            AllSamples = new List<short>();
+            if (AlgorithmRecognitionSettings.AUDIO_CODEC_MODE == AlgorithmRecognitionSettings.AUDIO_CODEC_SBC)
+            {
+                sbc_Decoder = new SBCDecoder();
+                Player = DependencyService.Get<IPCMAudio>();
+                sbc_Decoder.SBCOutput += Decoder_SBCOutput;
+            }
+            else if (AlgorithmRecognitionSettings.AUDIO_CODEC_MODE == AlgorithmRecognitionSettings.AUDIO_CODEC_ADPCM)
+            {
+                Decoder = new ADPCMDecoder(32000 / 10);
+                Player = DependencyService.Get<IPCMAudio>();
+                Decoder.PCMOutput += Decoder_PCMOutput;
+            }
+        }
+
     }
 }
