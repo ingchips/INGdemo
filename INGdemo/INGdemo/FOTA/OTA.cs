@@ -46,13 +46,6 @@ namespace INGota.FOTA
         internal readonly bool ManualReboot;
     }
 
-    internal class Ing91800
-    {
-        internal const int FLASH_BASE   = 0x4000;
-        internal const int FLASH_SIZE   = 512 * 1024;
-        internal const int FLASH_PAGE_SIZE = 8 * 1024;
-    }
-
     internal class Version
     {
         public int[] app = new int[3];
@@ -74,11 +67,11 @@ namespace INGota.FOTA
             0x69, 0xfe, 0x0b, 0xb7, 0x8f, 0x5e, 0x94, 0xd8, 0xf2, 0xf4, 0x80,
             0x94, 0x0a, 0xc2, 0xf2, 0x6e, 0x43, 0xbb, 0x69, 0x5f, 0xa7};
         public static byte[] root_pk = new byte[] {
-            0x14, 0x1b, 0x0b, 0x28, 0x46, 0xc4, 0xaf, 0x97, 0x41, 0x59, 0x97, 
-            0x4f, 0x17, 0x52, 0xe0, 0x1c, 0x9a, 0xea, 0x21, 0xc7, 0xc6, 0xe3, 
-            0x04, 0x30, 0x4f, 0x8d, 0x9c, 0xf0, 0x7f, 0x1d, 0x1f, 0x0a, 0x83, 
-            0xaf, 0x76, 0xe0, 0x4d, 0xc1, 0xcc, 0x96, 0xb4, 0xb8, 0x3f, 0xbb, 
-            0x73, 0x6c, 0x66, 0x3f, 0x0b, 0xdf, 0x52, 0x86, 0xbf, 0x60, 0xe8, 
+            0x14, 0x1b, 0x0b, 0x28, 0x46, 0xc4, 0xaf, 0x97, 0x41, 0x59, 0x97,
+            0x4f, 0x17, 0x52, 0xe0, 0x1c, 0x9a, 0xea, 0x21, 0xc7, 0xc6, 0xe3,
+            0x04, 0x30, 0x4f, 0x8d, 0x9c, 0xf0, 0x7f, 0x1d, 0x1f, 0x0a, 0x83,
+            0xaf, 0x76, 0xe0, 0x4d, 0xc1, 0xcc, 0x96, 0xb4, 0xb8, 0x3f, 0xbb,
+            0x73, 0x6c, 0x66, 0x3f, 0x0b, 0xdf, 0x52, 0x86, 0xbf, 0x60, 0xe8,
             0x91, 0x27, 0x00, 0x85, 0xc8, 0xbf, 0x55, 0xa8, 0x96};
         public byte[] session_pk;
         public byte[] session_sk;
@@ -173,8 +166,7 @@ namespace INGota.FOTA
         FlashInfo[] FlashInfos = new FlashInfo[]
         {
              new FlashInfo(0x4000U, 512 * 1024, 8 * 1024, true),        // ING9188
-             new FlashInfo(0x4000U, 256 * 1024, 8 * 1024, true),        // ING9186
-             new FlashInfo(0x02000000U, 2048 * 1024, 4 * 1024, false),  // ING9168
+             new FlashInfo(0x02002000U, (512 - 8) * 1024, 4 * 1024, false),   // ING9168
         };
 
         FlashInfo CurrentFlash;
@@ -208,7 +200,7 @@ namespace INGota.FOTA
         int FLASH_OTA_DATA_HIGH { get { return (int)CurrentFlash.BaseAddr + (int)CurrentFlash.TotalSize; } }
 
         const int OTA_UPDATE_FLAG = 0x5A5A5A5A;
-        const int OTA_LOCK_FLAG = 0x5A5A5A5A;        
+        const int OTA_LOCK_FLAG = 0x5A5A5A5A;
 
         const int OTA_CTRL_STATUS_DISABLED = 0;
         const int OTA_CTRL_STATUS_OK = 1;
@@ -275,13 +267,13 @@ namespace INGota.FOTA
         {
             KeyUtils.peer_pk = await driver.ReadPubKey();
             var sig = KeyUtils.SignData(KeyUtils.root_sk, KeyUtils.session_pk);
-            if (!await driver.WritePubKey(KeyUtils.session_pk.Concat(sig).ToArray())) return false;            
+            if (!await driver.WritePubKey(KeyUtils.session_pk.Concat(sig).ToArray())) return false;
             var r = (await ReadStatus()) != OTA_CTRL_STATUS_ERROR;
             if (r)
             {
                 KeyUtils.shared_secret = KeyUtils.getSharedSecret(KeyUtils.session_sk, KeyUtils.peer_pk);
                 KeyUtils.xor_key = KeyUtils.SHA256(KeyUtils.shared_secret);
-                KeyUtils.is_secure_fota = true; 
+                KeyUtils.is_secure_fota = true;
             }
             return r;
         }
@@ -374,9 +366,9 @@ namespace INGota.FOTA
             CurrentFlash = FlashInfos[series];
             Bins.Clear();
             Entry = 0;
-            
+
             try
-            { 
+            {
                 SetStatus(OTAStatus.Checking);
                 await ReadDevVer();
                 var response = await URLGet(updateURL + "latest.json");
@@ -489,8 +481,8 @@ namespace INGota.FOTA
             foreach (var b in Bins)
             {
                 Utils.WriteLittle((UInt32)b.WriteAddress, update, c); c += 4;
-                Utils.WriteLittle((UInt32)b.LoadAddress, update, c); c += 4; 
-                Utils.WriteLittle((UInt32)b.Data.Length, update, c); c += 4;                              
+                Utils.WriteLittle((UInt32)b.LoadAddress, update, c); c += 4;
+                Utils.WriteLittle((UInt32)b.Data.Length, update, c); c += 4;
             }
 
             if (KeyUtils.is_secure_fota)
@@ -595,7 +587,7 @@ namespace INGota.FOTA
                 uint param = (uint)(Utils.Crc(page) << 16 | page.Length);
                 Utils.WriteLittle(param, cmd, 1);
             }
-            
+
             if (!await driver.WriteCtrl(cmd)) return false;
 
             while (true)
@@ -603,12 +595,12 @@ namespace INGota.FOTA
                 await Task.Delay(KeyUtils.is_secure_fota ? 200 : 10);
                 switch (await ReadStatus())
                 {
-                    case OTA_CTRL_STATUS_ERROR: 
+                    case OTA_CTRL_STATUS_ERROR:
                         return false;
                     case OTA_CTRL_STATUS_OK:
                         return true;
                 }
-            }            
+            }
         }
 
         async Task<bool> BurnMetaData()
@@ -632,7 +624,7 @@ namespace INGota.FOTA
             int total = Bins.Select((b) => b.Data.Length).Sum();
             int written = 0;
 
-            Action<int> onProgress = (int current) => SendProgress(progress, (double)(current + written) / total);            
+            Action<int> onProgress = (int current) => SendProgress(progress, (double)(current + written) / total);
 
             foreach (var b in Bins)
             {
@@ -662,7 +654,7 @@ namespace INGota.FOTA
                         {
                             if ((written == 0) && (OTA_BLOCK_SIZE > Utils.BLE_MIN_MTU_SIZE))
                             {
-                                SendProgress(progress, "fallback to MTU size = minimum (23)...");                                
+                                SendProgress(progress, "fallback to MTU size = minimum (23)...");
                                 OTA_BLOCK_SIZE = Utils.BLE_MIN_MTU_SIZE;
                                 errors = 0;
                                 await Task.Delay(20);
@@ -703,7 +695,7 @@ namespace INGota.FOTA
             {
                 if (OTA_BLOCK_SIZE < Utils.BLE_MIN_MTU_SIZE)
                     throw new Exception("MtuSize must be >= 20");
-                r = await DoStart();           
+                r = await DoStart();
             }
             catch (Exception e)
             {

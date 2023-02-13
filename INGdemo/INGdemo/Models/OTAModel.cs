@@ -85,7 +85,6 @@ namespace INGota.Models
 
             seriesPicker = new Picker { Title = "Select Chip Series:" };
             seriesPicker.Items.Add("ING9188xx/ING9187xx");
-            seriesPicker.Items.Add("ING9186xx/ING9185xx");
             seriesPicker.Items.Add("ING9168xx");
             seriesPicker.SelectedIndex = 0;
             seriesPicker.HorizontalOptions = LayoutOptions.FillAndExpand;

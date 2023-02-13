@@ -8,8 +8,8 @@
 
   <Identity
     Name="74e8a6f6-a1bb-4a90-9fef-ad3b50eb922b"
-    Publisher="CN=INGCHIPS"
-    Version="1.4.0.0" />
+    Publisher="CN=ingchip"
+    Version="1.7.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="ec0cc741-fd3e-485c-81be-68815c480690" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
