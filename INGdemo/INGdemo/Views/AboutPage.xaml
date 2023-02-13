@@ -38,7 +38,7 @@
                             <FormattedString.Spans>
                                 <Span Text="ING BLE" FontAttributes="Bold" FontSize="22" />
                                 <Span Text=" " />
-                                <Span Text="1.7.1" ForegroundColor="{StaticResource LightTextColor}" />
+                                <Span Text="1.7.2" ForegroundColor="{StaticResource LightTextColor}" />
                             </FormattedString.Spans>
                         </FormattedString>
                     </Label.FormattedText>
