@@ -325,5 +325,20 @@ namespace INGota.FOTA
             }
             return string.Join("\n", r);
         }
+
+        public static uint ParseInt(string s)
+        {
+            UInt32 r = 0;
+            if (s.StartsWith("0x") || s.StartsWith("0X"))
+            {
+                var hex = s.Substring(2);
+                r = UInt32.Parse(hex, NumberStyles.HexNumber);
+            }
+            else
+            {
+                UInt32.TryParse(s, out r);
+            }
+            return r;
+        }
     }
 }

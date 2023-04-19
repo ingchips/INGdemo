@@ -195,9 +195,7 @@ namespace INGota.FOTA
         }
 
         int FLASH_BASE { get { return (int)CurrentFlash.BaseAddr; } }
-        int FLASH_SIZE { get { return (int)CurrentFlash.TotalSize; } }
         int FLASH_PAGE_SIZE { get { return (int)CurrentFlash.PageSize; } }
-        int FLASH_OTA_DATA_HIGH { get { return (int)CurrentFlash.BaseAddr + (int)CurrentFlash.TotalSize; } }
 
         const int OTA_UPDATE_FLAG = 0x5A5A5A5A;
         const int OTA_LOCK_FLAG = 0x5A5A5A5A;
@@ -245,10 +243,13 @@ namespace INGota.FOTA
             this.driver = driver;
             Bins = new List<OTABin>();
             KeyUtils = new KeyUtils();
+            EmptyFlashTop = 0;
         }
 
         public bool Available { get { return driver.Available; } }
         public OTAStatus Status { get => status; }
+
+        public uint EmptyFlashTop { get;  set; }
 
         public string UpdateInfo { get; set; }
 
@@ -338,6 +339,12 @@ namespace INGota.FOTA
                 SetStatus(OTAStatus.UpdateAvailable);
             else
                 SetStatus(OTAStatus.UpToDate);
+        }
+
+        public uint GetFlashTopAddress(int series)
+        {
+            var f = FlashInfos[series];
+            return f.BaseAddr + f.TotalSize;
         }
 
         async public Task CheckUpdateLocal(int series, byte[] bytes)
@@ -464,7 +471,7 @@ namespace INGota.FOTA
 
         protected virtual void MakeFlashProcedure()
         {
-            int addr = FLASH_OTA_DATA_HIGH;
+            int addr = (int)EmptyFlashTop;
             if (Bins.Count < 1)
                 return;
 

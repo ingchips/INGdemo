@@ -14,6 +14,7 @@ using Plugin.BLE.Abstractions;
 
 using INGota.FOTA;
 using INGdemo.Models;
+using System.Runtime.CompilerServices;
 
 namespace INGota.Models
 {
@@ -42,6 +43,7 @@ namespace INGota.Models
         IBleDriver driver;
         WaitActivity Wait;
         Entry urlInput;
+        Entry topAddressInput;
         Picker seriesPicker;
 
         async void InitUI(IDevice ADevice, IReadOnlyList<IService> services)
@@ -55,6 +57,10 @@ namespace INGota.Models
             var server = new Label();
             server.Text = "FOTA Server";
             server.Style = Device.Styles.TitleStyle;
+
+            var labelTopAddr = new Label();
+            labelTopAddr.Text = "Flash Top Address";
+            labelTopAddr.Style = Device.Styles.TitleStyle;
 
             var secureInfo = new Label();
             
@@ -82,12 +88,15 @@ namespace INGota.Models
 
             urlInput = new Entry();
             urlInput.Text = FOTA_SERVER;
+            topAddressInput = new Entry();
+            topAddressInput.Text = "0";
 
             seriesPicker = new Picker { Title = "Select Chip Series:" };
             seriesPicker.Items.Add("ING9188xx/ING9187xx");
             seriesPicker.Items.Add("ING9168xx");
             seriesPicker.SelectedIndex = 0;
             seriesPicker.HorizontalOptions = LayoutOptions.FillAndExpand;
+            seriesPicker.SelectedIndexChanged += SeriesPicker_SelectedIndexChanged;
 
             var seriesCont = new StackLayout();
             seriesCont.Orientation = StackOrientation.Horizontal;
@@ -96,7 +105,9 @@ namespace INGota.Models
             seriesCont.HorizontalOptions = LayoutOptions.FillAndExpand;
 
             container.Margin = 10;
-            container.Children.Add(seriesCont); 
+            container.Children.Add(seriesCont);
+            container.Children.Add(labelTopAddr);
+            container.Children.Add(topAddressInput);
             container.Children.Add(server);            
             container.Children.Add(urlInput);
 
@@ -131,6 +142,18 @@ namespace INGota.Models
             Summary.GestureRecognizers.Add(tapGestureRecognizer);
             Summary_Tapped(null, null);
             Action.Clicked += Action_Clicked;
+
+            UpdateFlashTopAddress();
+        }
+
+        private void UpdateFlashTopAddress()
+        {
+            topAddressInput.Text = "0x" + ota.GetFlashTopAddress(seriesPicker.SelectedIndex).ToString("X8");
+        }
+
+        private void SeriesPicker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateFlashTopAddress();
         }
 
         private async void Btn_Pressed(object sender, EventArgs e)
@@ -231,7 +254,7 @@ namespace INGota.Models
             ota.StatusChanged += Ota_StatusChanged;
             ota.Progress += Ota_Progress;
 
-            InitUI(ADevice, services);     
+            InitUI(ADevice, services);   
         }
 
         private void Summary_Tapped(object sender, EventArgs e)
@@ -307,6 +330,7 @@ namespace INGota.Models
                     {
                         BleDevice.UpdateConnectionInterval(ConnectionInterval.High);
                         int MtuSize = await BleDevice.RequestMtuAsync(250);
+                        ota.EmptyFlashTop = Utils.ParseInt(topAddressInput.Text);
                         r = await ota.Update(Math.Max(23, MtuSize - 4));
                     }
                     finally
