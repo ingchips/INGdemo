@@ -149,6 +149,7 @@ namespace INGota.Models
         private void UpdateFlashTopAddress()
         {
             topAddressInput.Text = "0x" + ota.GetFlashTopAddress(seriesPicker.SelectedIndex).ToString("X8");
+            ota.EmptyFlashTop = ota.GetFlashTopAddress(seriesPicker.SelectedIndex);
         }
 
         private void SeriesPicker_SelectedIndexChanged(object sender, EventArgs e)
@@ -254,7 +255,8 @@ namespace INGota.Models
             ota.StatusChanged += Ota_StatusChanged;
             ota.Progress += Ota_Progress;
 
-            InitUI(ADevice, services);   
+            InitUI(ADevice, services);
+            ota.EmptyFlashTop = Utils.ParseInt(topAddressInput.Text);
         }
 
         private void Summary_Tapped(object sender, EventArgs e)
@@ -329,8 +331,7 @@ namespace INGota.Models
                     try
                     {
                         BleDevice.UpdateConnectionInterval(ConnectionInterval.High);
-                        int MtuSize = await BleDevice.RequestMtuAsync(250);
-                        ota.EmptyFlashTop = Utils.ParseInt(topAddressInput.Text);
+                        int MtuSize = await BleDevice.RequestMtuAsync(250);                        
                         r = await ota.Update(Math.Max(23, MtuSize - 4));
                     }
                     finally
