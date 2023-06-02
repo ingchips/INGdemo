@@ -38,7 +38,7 @@
                             <FormattedString.Spans>
                                 <Span Text="ING BLE" FontAttributes="Bold" FontSize="22" />
                                 <Span Text=" " />
-                                <Span Text="1.7.4" ForegroundColor="{StaticResource LightTextColor}" />
+                                <Span Text="1.7.5" ForegroundColor="{StaticResource LightTextColor}" />
                             </FormattedString.Spans>
                         </FormattedString>
                     </Label.FormattedText>
@@ -49,7 +49,7 @@
                             <FormattedString.Spans>
                                 <Span Text="This app works with " />
                                 <Span Text=" " />
-                                <Span Text="INGChips 918xx" FontAttributes="Bold" />
+                                <Span Text="INGChips 918/916" FontAttributes="Bold" />
                                 <Span Text=" development boards which can be made into a thermometer, a pedometer, an LED, an iBeacon, etc by downloading different programs." />
                             </FormattedString.Spans>
                         </FormattedString>
