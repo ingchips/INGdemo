@@ -89,6 +89,7 @@ namespace INGota.Models
             urlInput = new Entry();
             urlInput.Text = FOTA_SERVER;
             topAddressInput = new Entry();
+            topAddressInput.TextChanged += TopAddressInput_TextChanged;
             topAddressInput.Text = "0";
 
             seriesPicker = new Picker { Title = "Select Chip Series:" };
@@ -146,10 +147,14 @@ namespace INGota.Models
             UpdateFlashTopAddress();
         }
 
+        private void TopAddressInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ota.EmptyFlashTop = Utils.ParseInt(topAddressInput.Text);
+        }
+
         private void UpdateFlashTopAddress()
         {
-            topAddressInput.Text = "0x" + ota.GetFlashTopAddress(seriesPicker.SelectedIndex).ToString("X8");
-            ota.EmptyFlashTop = ota.GetFlashTopAddress(seriesPicker.SelectedIndex);
+            topAddressInput.Text = "0x" + ota.GetFlashTopAddress(seriesPicker.SelectedIndex).ToString("X8");            
         }
 
         private void SeriesPicker_SelectedIndexChanged(object sender, EventArgs e)
@@ -256,7 +261,6 @@ namespace INGota.Models
             ota.Progress += Ota_Progress;
 
             InitUI(ADevice, services);
-            ota.EmptyFlashTop = Utils.ParseInt(topAddressInput.Text);
         }
 
         private void Summary_Tapped(object sender, EventArgs e)
