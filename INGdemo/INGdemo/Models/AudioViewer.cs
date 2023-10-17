@@ -255,15 +255,9 @@ namespace INGdemo.Models
         private void AlgorithmPicker_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (AlgorithmPicker.SelectedItem.ToString() == AlgorithmRecognitionSettings.Algorithm_SBC)
-            {
                 AlgorithmRecognitionSettings.AUDIO_CODEC_MODE = 2;
-                SetupDecoder();
-            }
             else
-            {
                 AlgorithmRecognitionSettings.AUDIO_CODEC_MODE = 1;
-                SetupDecoder();
-            }
         }
         private void SamplingRatePicker_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -309,6 +303,7 @@ namespace INGdemo.Models
         {
             int samplingRate = int.Parse(SamplingRatePicker.SelectedItem.ToString());
             string audioCodec = AlgorithmPicker.SelectedItem.ToString();
+            SetupDecoder();
             Decoder.Reset();
             Player.Play(samplingRate);
             AllSamples.Clear();

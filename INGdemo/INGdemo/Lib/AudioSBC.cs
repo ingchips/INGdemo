@@ -757,7 +757,7 @@ namespace INGdemo.Lib
 
         void Decode(byte data)
         {
-            if (Readindex > inputStream.Length)
+            if (Readindex >= inputStream.Length)
                 Readindex = 0;
 
             inputStream[Readindex++] = data;
@@ -767,9 +767,10 @@ namespace INGdemo.Lib
                 {
                     if (sbc_prob(inputStream, ref sbc.priv.frame, Readindex) == 0)
                         inputSize = sbc_get_frame_size(ref sbc.priv.frame);
-                    if (inputSize == 0)
+                    if ((inputSize == 0) || (inputSize > inputStream.Length))
                     {
                         Array.Copy(inputStream, 1, inputStream, 0, Readindex - 1);
+                        Readindex--;
                     }
                 }
                 return;
