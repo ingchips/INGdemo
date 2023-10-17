@@ -213,7 +213,7 @@ namespace INGota.Models
                     await ota.CheckUpdateLocal(seriesPicker.SelectedIndex, bytes);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // The user canceled or something went wrong
             }

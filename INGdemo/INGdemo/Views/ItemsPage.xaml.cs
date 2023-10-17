@@ -79,7 +79,7 @@ namespace INGota.Views
                 }
             }
             dev = new BLEDev(ADevice);
-            rssi.Text = string.Format("{0} dBm", dev.RSSI);            
+            rssi.Text = string.Format("{0} dBm", dev.RSSI);
             name.Text = dev.Name;
             info.Text = dev.Info;
             btn.CommandParameter = ADevice.Id.ToString();
@@ -106,12 +106,12 @@ namespace INGota.Views
             iconStr = new Label();
             iconStr.Style = Device.Styles.ListItemTextStyle;
             iconStr.FontSize = 30;
-            iconStr.VerticalTextAlignment = TextAlignment.Center;            
+            iconStr.VerticalTextAlignment = TextAlignment.Center;
             iconStr.HorizontalTextAlignment = TextAlignment.Center;
             iconStr.Text = dev.IconString;
             if (iconStr.Text.IndexOf("?") >= 0) iconStr.TextColor = Color.Orange;
 
-            sig.Children.Add(iconStr); 
+            sig.Children.Add(iconStr);
 
             var titlebar = new StackLayout();
             titlebar.Orientation = StackOrientation.Horizontal;
@@ -278,7 +278,7 @@ namespace INGota.Views
 
                     if (index < 0) break;
                 }
-                
+
                 vis = true;
             } while (false);
 
@@ -299,7 +299,7 @@ namespace INGota.Views
                 DevListView.Children.Clear();
                 devicesUI.Clear();
 
-                
+
                 adapter.ScanTimeout = 0x7fffffff;
 
                 switch (Device.RuntimePlatform)
@@ -324,11 +324,11 @@ namespace INGota.Views
                             DevListView.Children.Add(ui.ui);
                         }
                     });
-                    
+
                 };
                 await adapter.StartScanningForDevicesAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
             finally
@@ -360,7 +360,7 @@ namespace INGota.Views
         protected override void OnAppearing()
         {
             base.OnAppearing();
-            
+
             var adapter = CrossBluetoothLE.Current.Adapter;
             if ((BleDevice != null) && (BleDevice.State == DeviceState.Connected))
             {
@@ -372,7 +372,7 @@ namespace INGota.Views
                 catch (Exception)
                 {
                 }
-                
+
                 BleDevice = null;
             }
         }

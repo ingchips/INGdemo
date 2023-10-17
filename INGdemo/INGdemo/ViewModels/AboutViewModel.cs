@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Windows.Input;
-
+using Xamarin.Essentials;
 using Xamarin.Forms;
 
 namespace INGota.ViewModels
@@ -11,7 +11,7 @@ namespace INGota.ViewModels
         {
             Title = "About";
 
-            OpenWebCommand = new Command(() => Device.OpenUri(new Uri("http://www.ingchips.com")));
+            OpenWebCommand = new Command(() => Launcher.TryOpenAsync(new Uri("http://www.ingchips.com")));
         }
 
         public ICommand OpenWebCommand { get; }

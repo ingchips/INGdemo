@@ -7,6 +7,10 @@ namespace INGdemo.Lib
 {
     static class Constants
     {
+        public const int MSBC_BLOCKS = 15;
+        public const int SBCDEC_FIXED_EXTRA_BITS = 2;
+        public const int SBC_HEADER_SIZE = 4;
+
         /* sampling frequency */
         public const byte SBC_FREQ_16000 = 0x00;
         public const byte SBC_FREQ_32000 = 0x01;
@@ -17,7 +21,7 @@ namespace INGdemo.Lib
         public const byte SBC_BLK_4 = 0x00;
         public const byte SBC_BLK_8 = 0x01;
         public const byte SBC_BLK_12 = 0x02;
-        public const byte SBC_BLK_16 = 0x03; 
+        public const byte SBC_BLK_16 = 0x03;
 
         /* channel mode */
         public const byte SBC_MODE_MONO = 0x00;
@@ -36,11 +40,11 @@ namespace INGdemo.Lib
         /* data endian */
         public const byte SBC_LE = 0x00;
         public const byte SBC_BE = 0x01;
-        
-        public const int  SCALE_SPROTO4_TBL = 12;    /*   八子带enc的系数/-4的等系数：11   */
-        public const int  SCALE_SPROTO8_TBL = 14;    /*   八子带enc的系数/-8的等系数：14   */
-        public const int  SCALE_NPROTO4_TBL = 11;    /*  八子带dec sbc_proto_8_80m0系数：11*/    
-        public const int  SCALE_NPROTO8_TBL = 11;    /*  八子带dec sbc_proto_8_80m1系数：11*/
+
+        public const int  SCALE_SPROTO4_TBL = 12;
+        public const int  SCALE_SPROTO8_TBL = 14;
+        public const int  SCALE_NPROTO4_TBL = 11;
+        public const int  SCALE_NPROTO8_TBL = 11;
 
         public const int SCALE4_STAGED1_BITS = 15;
         public const int SCALE4_STAGED2_BITS = 16;
@@ -49,13 +53,18 @@ namespace INGdemo.Lib
 
 
         public const byte SBC_SYNCWORD = 0x9C;
-    } 
+    }
 
     public class exp
     {
         static public int CI(uint i)
         {
-            return Convert.ToInt32(i);
+            if (i <= 0x7fffffff)
+                return (int)i;
+            else
+            {
+                return -(int)(~i) - 1;
+            }
         }
 
         static public int SS4(int i)
@@ -70,12 +79,17 @@ namespace INGdemo.Lib
 
         static public int SN4(int i)
         {
-            return  i >> Constants.SCALE_NPROTO4_TBL; 
+            return  i >> (Constants.SCALE_NPROTO4_TBL + 1 + Constants.SBCDEC_FIXED_EXTRA_BITS);
         }
 
         static public int SN8(int i)
         {
-            return  i >> Constants.SCALE_NPROTO8_TBL; 
+            return  i >> (Constants.SCALE_NPROTO8_TBL + 1 + Constants.SBCDEC_FIXED_EXTRA_BITS);
+        }
+
+        static public int SN8(uint i)
+        {
+            return SN8(CI(i));
         }
 
         static public int MUL(int a, int b)
@@ -116,7 +130,7 @@ namespace INGdemo.Lib
                 return -0x8000;
             else
                 return (short)i;
-        } 
+        }
 
         static public byte sbc_crc8(byte[] data, int len)
         {

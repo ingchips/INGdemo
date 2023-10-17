@@ -57,147 +57,6 @@ namespace INGdemo.Models
         }
     }
 
-    internal class TencentAiPlatform
-    {
-
-        static readonly string url_preffix = "https://api.ai.qq.com/fcgi-bin/";
-
-        public static string GetMD5Hash(string str)
-        {
-            StringBuilder sb = new StringBuilder();
-            using (MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider())
-            {
-                byte[] data = md5.ComputeHash(Encoding.UTF8.GetBytes(str));
-
-                int length = data.Length;
-                for (int i = 0; i < length; i++)
-                    sb.Append(data[i].ToString("X2"));
-
-            }
-            return sb.ToString();
-        }
-
-        public static string EncodeParams(JObject Params)
-        {
-            var uri_str = "";
-            var ks = Params.Properties().Select((x) => x.Name).ToList();
-            foreach (var key in ks)
-            {
-                uri_str += string.Format("{0}={1}&", key, HttpUtility.UrlEncode(Params[key].ToString()));
-            }
-            return uri_str.TrimEnd(new char [] { '&' });
-        }
-
-        static string UrlEncode(string value)
-        {
-            int limit = 2000;
-
-            StringBuilder sb = new StringBuilder();
-            int loops = value.Length / limit;
-
-            for (int i = 0; i <= loops; i++)
-            {
-                if (i < loops)
-                {
-                    sb.Append(Uri.EscapeDataString(value.Substring(limit * i, limit)));
-                }
-                else
-                {
-                    sb.Append(Uri.EscapeDataString(value.Substring(limit * i)));
-                }
-            }
-
-            return sb.ToString();
-        }
-
-        public static string GenSignString(JObject Params)
-        {
-            var uri_str = "";
-            var ks = Params.Properties().Select((x) => x.Name).ToList();
-            ks.Sort();
-            foreach (var key in ks)
-            {
-                if (key == "app_key")
-                    continue;
-                uri_str += string.Format("{0}={1}&", key, UrlEncode(Params[key].ToString()));
-            }
-            var sign_str = uri_str + "app_key=" + Params["app_key"].ToString();
-            return GetMD5Hash(sign_str);
-        }
-
-        string app_id, app_key;
-
-        public TencentAiPlatform(string app_id, string app_key)
-        {
-            this.app_id = app_id;
-            this.app_key = app_key;
-        }
-
-        async Task<Stream> invoke(string url, JObject Params)
-        {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "POST";
-            request.ContentType = "application/x-www-form-urlencoded";
-            string paraUrlCoded = EncodeParams(Params);
-            byte[] payload = System.Text.Encoding.UTF8.GetBytes(paraUrlCoded);
-            request.ContentLength = payload.Length;
-
-            Stream writer;
-            writer = await request.GetRequestStreamAsync();
-
-            await writer.WriteAsync(payload, 0, payload.Length);
-            writer.Close();
-
-            HttpWebResponse response;
-            response = (HttpWebResponse) await request.GetResponseAsync();
-
-            return response.GetResponseStream();
-        }
-
-        static public long GetTimeStamp()
-        {
-            return new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-        }
-
-        public async Task<string> GetAaiWxAsrs(short []chunk,
-                                  string speech_id,
-                                  int end_flag,
-                                  int format_id,
-                                  int rate, int bits, int seq, int cont_res)
-        {
-            var Params = new JObject();
-
-            int chunk_len = chunk.Length * 2;
-            var bytes = new byte[chunk_len];
-            Buffer.BlockCopy(chunk, 0, bytes, 0, bytes.Length);
-            var speech_chunk = Convert.ToBase64String(bytes);
-
-            Params["app_id"] = app_id;
-            Params["app_key"] = app_key;
-            Params["time_stamp"] = GetTimeStamp();
-            Params["nonce_str"] = GetTimeStamp().ToString();
-            Params["speech_chunk"] = speech_chunk;
-            Params["speech_id"] = speech_id;
-            Params["end"] = end_flag;
-            Params["format"] = format_id;
-            Params["rate"] = rate;
-            Params["bits"] = bits;
-            Params["seq"] = seq;
-            Params["len"] = chunk_len;
-            Params["cont_res"] = cont_res;
-            Params["sign"] = GenSignString(Params);
-
-            var s = await invoke(url_preffix + "aai/aai_wxasrs", Params);
-            StreamReader reader = new StreamReader(s);
-            var r = await reader.ReadToEndAsync();
-            JObject o = JObject.Parse(r);
-            if (o["msg"].ToString() == "ok")
-                return o["data"]["speech_text"].ToString();
-            else
-                return r;
-        }
-    }
-
     class GoogleRecognizer : ISpeechRecognition
     {
 
@@ -269,34 +128,6 @@ namespace INGdemo.Models
         }
     }
 
-    class TecentAiRecognizer : ISpeechRecognition
-    {
-        // Generates a random string with a given size.
-        static public string RandomString(int size, bool lowerCase = false)
-        {
-            var builder = new StringBuilder(size);
-            var rand = new Random();
-
-            for (var i = 0; i < size; i++)
-            {
-                var @char = (char)rand.Next('a', 'a' + 26);
-                builder.Append(@char);
-            }
-
-            return lowerCase ? builder.ToString() : builder.ToString().ToUpper();
-        }
-
-        async public Task<string> Recognize(short[] samples)
-        {
-            string app_key = Secrets.TecentAiPlatformSecrets_app_key;
-            string app_id = Secrets.TecentAiPlatformSecrets_app_id;
-
-            var api = new TencentAiPlatform(app_id, app_key);
-
-            return await api.GetAaiWxAsrs(samples, RandomString(16),
-                1, 1, SpeechRecognitionSettings.SAMPLE_RATE, 16, 0, 1);
-        }
-    }
 
     class AudioViewer : ContentPage
     {
@@ -318,8 +149,7 @@ namespace INGdemo.Models
 
         Label label;
         Label labelInfo;
-        ADPCMDecoder Decoder;
-        SBCDecoder sbc_Decoder;
+        BasicPCMDecoder Decoder;
         IPCMAudio Player;
         Slider Gain;
         Label GainInd;
@@ -348,7 +178,6 @@ namespace INGdemo.Models
             GainInd.Style = Device.Styles.CaptionStyle;
             GainInd.HorizontalOptions = LayoutOptions.End;
             layout.Children.Add(GainInd);
-
 
             return layout;
         }
@@ -425,29 +254,20 @@ namespace INGdemo.Models
 
         private void AlgorithmPicker_SelectedIndexChanged(object sender, EventArgs e)
         {
-
             if (AlgorithmPicker.SelectedItem.ToString() == AlgorithmRecognitionSettings.Algorithm_SBC)
             {
                 AlgorithmRecognitionSettings.AUDIO_CODEC_MODE = 2;
-                Reset();
-            }
-            else if(AlgorithmPicker.SelectedItem.ToString() == AlgorithmRecognitionSettings.Algorithm_ADPCM)
-            {
-                AlgorithmRecognitionSettings.AUDIO_CODEC_MODE = 1;
-                Reset();
+                SetupDecoder();
             }
             else
             {
-                AlgorithmRecognitionSettings.AUDIO_CODEC_MODE = 0;
-                DisplayAlert("Warning", "There is no such algorithm to match!.", "OK");
+                AlgorithmRecognitionSettings.AUDIO_CODEC_MODE = 1;
+                SetupDecoder();
             }
-
-
         }
         private void SamplingRatePicker_SelectedIndexChanged(object sender, EventArgs e)
         {
             EnginePicker.IsEnabled = int.Parse(SamplingRatePicker.SelectedItem.ToString()) == SpeechRecognitionSettings.SAMPLE_RATE;
-
         }
 
         async private void BtnTalk_Released(object sender, EventArgs e)
@@ -489,20 +309,7 @@ namespace INGdemo.Models
         {
             int samplingRate = int.Parse(SamplingRatePicker.SelectedItem.ToString());
             string audioCodec = AlgorithmPicker.SelectedItem.ToString();
-            switch(AlgorithmRecognitionSettings.AUDIO_CODEC_MODE)
-            {
-                case 1:
-                    Decoder.Reset();
-                    break;
-                case 2:
-                    sbc_Decoder.Reset();
-                    break;
-                default:
-                    await DisplayAlert("Warning", "Initialization error!.", "OK");
-                    break;
-
-            }
-
+            Decoder.Reset();
             Player.Play(samplingRate);
             AllSamples.Clear();
             await charCtrl.WriteAsync(new byte[1] { CMD_MIC_OPEN });
@@ -551,17 +358,8 @@ namespace INGdemo.Models
 
         private void CharOutput_ValueUpdated(object sender, Plugin.BLE.Abstractions.EventArgs.CharacteristicUpdatedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("CharOutput_ValueUpdated()!");
-            if (Decoder != null && AlgorithmRecognitionSettings.AUDIO_CODEC_MODE == AlgorithmRecognitionSettings.AUDIO_CODEC_ADPCM)
-            {
-                System.Diagnostics.Debug.WriteLine("ADPCM_Decoder");
+            if (Decoder != null)
                 Decoder.Decode(e.Characteristic.Value);
-            }
-            else if (sbc_Decoder != null && AlgorithmRecognitionSettings.AUDIO_CODEC_MODE == AlgorithmRecognitionSettings.AUDIO_CODEC_SBC)
-            {
-                sbc_Decoder.Decode(e.Characteristic.Value);
-            }
-
 
             Device.BeginInvokeOnMainThread(() =>
                 label.Text = Utils.ByteArrayToString(e.Characteristic.Value)
@@ -570,7 +368,8 @@ namespace INGdemo.Models
 
         public AudioViewer(IDevice ADevice, IReadOnlyList<IService> services)
         {
-            Reset();
+            Player = DependencyService.Get<IPCMAudio>();
+            SetupDecoder();
             BleDevice = ADevice;
             InitUI();
             service = services.First((s) => s.Id == GUID_SERVICE);
@@ -583,17 +382,6 @@ namespace INGdemo.Models
             AllSamples.AddRange(e);
         }
 
-        private void Decoder_SBCOutput(object sender, byte[] e)
-        {
-            short[] se = new short[e.Length];
-            for (int i=0; i<e.Length; i++)
-            {
-                se[i] = (short)(e[i]);
-            }
-            Player.Write(se);
-            AllSamples.AddRange(se);
-        }
-
         async protected override void OnDisappearing()
         {
             base.OnDisappearing();
@@ -601,22 +389,18 @@ namespace INGdemo.Models
             if (BleDevice.State == DeviceState.Connected) await charOutput.StopUpdatesAsync();
         }
 
-        private void Reset()
+        private void SetupDecoder()
         {
             AllSamples = new List<short>();
             if (AlgorithmRecognitionSettings.AUDIO_CODEC_MODE == AlgorithmRecognitionSettings.AUDIO_CODEC_SBC)
             {
-                sbc_Decoder = new SBCDecoder();
-                Player = DependencyService.Get<IPCMAudio>();
-                sbc_Decoder.SBCOutput += Decoder_SBCOutput;
+                Decoder = new SBCDecoder(3200);
             }
-            else if (AlgorithmRecognitionSettings.AUDIO_CODEC_MODE == AlgorithmRecognitionSettings.AUDIO_CODEC_ADPCM)
+            else
             {
-                Decoder = new ADPCMDecoder(32000 / 10);
-                Player = DependencyService.Get<IPCMAudio>();
-                Decoder.PCMOutput += Decoder_PCMOutput;
+                Decoder = new ADPCMDecoder(3200);
             }
+            Decoder.PCMOutput += Decoder_PCMOutput;
         }
-
     }
 }

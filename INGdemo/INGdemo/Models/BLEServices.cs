@@ -113,7 +113,7 @@ namespace INGdemo.Models
             };
         static private Type FindViewer(Guid guid)
         {
-            return viewers.FirstOrDefault((t) => 
+            return viewers.FirstOrDefault((t) =>
                         guid.Equals((Guid)t.GetField("GUID_SERVICE", BindingFlags.Static | BindingFlags.Public)
                                            .GetValue(null)));
         }
@@ -144,7 +144,7 @@ namespace INGdemo.Models
                 p = (Page)t.InvokeMember(t.Name, BindingFlags.Public |
                         BindingFlags.Instance | BindingFlags.CreateInstance,
                         null, null, new object[] { BleDevice, services });
-                
+
             }
             else
             {

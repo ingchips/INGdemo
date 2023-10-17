@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace INGdemo.Lib
-{   
+{
     public enum Channels
     {
-        
+
         MONO		= Constants.SBC_MODE_MONO,
         DUAL_CHANNEL	= Constants.SBC_MODE_DUAL_CHANNEL,
         STEREO		= Constants.SBC_MODE_STEREO,
@@ -49,27 +49,27 @@ namespace INGdemo.Lib
         public int[,,] sb_sample;
 
         /* original pcm audio samples */
-        public short[,] pcm_sample; 
-     
+        public short[,] pcm_sample;
+
     }
 
     public struct sbc_decoder_state
     {
         public int subbands;
-        public int[,] V;
-        public int[,] offset;
+        public List<int[]> V;
+        public List<int[]> offset;
     }
-
-
 
     public struct sbc_priv
     {
+        public bool msbc;
+
         public bool init;
         public sbc_frame frame;
         public sbc_decoder_state dec_state;
     }
 
- 
+
 
 
     public struct sbc_struct
@@ -84,7 +84,7 @@ namespace INGdemo.Lib
         public byte bitpool;
         public byte endian;
 
-        public sbc_priv priv;     
+        public sbc_priv priv;
     }
 
 

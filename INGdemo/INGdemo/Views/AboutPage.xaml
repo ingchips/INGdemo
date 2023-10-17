@@ -4,11 +4,11 @@
              x:Class="INGota.Views.AboutPage"
              xmlns:vm="clr-namespace:INGota.ViewModels"
              Title="{Binding Title}">
-    
+
     <ContentPage.BindingContext>
         <vm:AboutViewModel />
     </ContentPage.BindingContext>
-    
+
     <ContentPage.Resources>
         <ResourceDictionary>
             <!--Page Level Resources: Compatible with Xamarin Live Player -->
@@ -17,7 +17,7 @@
             <Color x:Key="LightTextColor">#999999</Color>
         </ResourceDictionary>
     </ContentPage.Resources>
-    
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -38,7 +38,7 @@
                             <FormattedString.Spans>
                                 <Span Text="ING BLE" FontAttributes="Bold" FontSize="22" />
                                 <Span Text=" " />
-                                <Span Text="1.7.5" ForegroundColor="{StaticResource LightTextColor}" />
+                                <Span Text="1.7.6" ForegroundColor="{StaticResource LightTextColor}" />
                             </FormattedString.Spans>
                         </FormattedString>
                     </Label.FormattedText>

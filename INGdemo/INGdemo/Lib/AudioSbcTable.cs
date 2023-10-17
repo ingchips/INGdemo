@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace INGdemo.Lib
-{   
-    public class SBCProtcol 
+{
+    public class SBCProtcol
     {
 
         public static int[,] sbc_offset4 = {
@@ -19,7 +19,7 @@ namespace INGdemo.Lib
             { -2, 0, 0, 0, 0, 0, 0, 1 },
             { -3, 0, 0, 0, 0, 0, 1, 2 },
             { -4, 0, 0, 0, 0, 0, 1, 2 },
-            { -4, 0, 0, 0, 0, 0, 1, 2 }    
+            { -4, 0, 0, 0, 0, 0, 1, 2 }
         };
         public static int[] sbc_proto_4_40m0 = {
             exp.SS4(0x00000000),            exp.SS4(exp.CI(0xffa6982f)),    exp.SS4(exp.CI(0xfba93848)),    exp.SS4(0x0456c7b8),
@@ -74,9 +74,23 @@ namespace INGdemo.Lib
 	        { exp.SN4(exp.CI(0xf89be510)),  exp.SN4(exp.CI(0xfcf043ac)),    exp.SN4(0x030fbc54),            exp.SN4(0x07641af0) }
         };
 
-        public static int[] synmatrix8 = {
-            exp.SN8(0x05a82798),            exp.SN8(0x0471ced0),            exp.SN8(0x07d8a5f0),            exp.SN8(0x018f8b84), 
-            exp.SN8(0x06a6d988),            exp.SN8(0x030fbc54),            exp.SN8(0x07641af0),            exp.SN8(exp.CI(0xf8000000))
+        public static int[,] synmatrix8 = {
+            { exp.SN8(0x05a82798), exp.SN8(0xfa57d868), exp.SN8(0xfa57d868), exp.SN8(0x05a82798), exp.SN8(0x05a82798), exp.SN8(0xfa57d868), exp.SN8(0xfa57d868), exp.SN8(0x05a82798) },
+            { exp.SN8(0x0471ced0), exp.SN8(0xf8275a10), exp.SN8(0x018f8b84), exp.SN8(0x06a6d988), exp.SN8(0xf9592678), exp.SN8(0xfe70747c), exp.SN8(0x07d8a5f0), exp.SN8(0xfb8e3130) },
+            { exp.SN8(0x030fbc54), exp.SN8(0xf89be510), exp.SN8(0x07641af0), exp.SN8(0xfcf043ac), exp.SN8(0xfcf043ac), exp.SN8(0x07641af0), exp.SN8(0xf89be510), exp.SN8(0x030fbc54) },
+            { exp.SN8(0x018f8b84), exp.SN8(0xfb8e3130), exp.SN8(0x06a6d988), exp.SN8(0xf8275a10), exp.SN8(0x07d8a5f0), exp.SN8(0xf9592678), exp.SN8(0x0471ced0), exp.SN8(0xfe70747c) },
+            { exp.SN8(0x00000000), exp.SN8(0x00000000), exp.SN8(0x00000000), exp.SN8(0x00000000), exp.SN8(0x00000000), exp.SN8(0x00000000), exp.SN8(0x00000000), exp.SN8(0x00000000) },
+            { exp.SN8(0xfe70747c), exp.SN8(0x0471ced0), exp.SN8(0xf9592678), exp.SN8(0x07d8a5f0), exp.SN8(0xf8275a10), exp.SN8(0x06a6d988), exp.SN8(0xfb8e3130), exp.SN8(0x018f8b84) },
+            { exp.SN8(0xfcf043ac), exp.SN8(0x07641af0), exp.SN8(0xf89be510), exp.SN8(0x030fbc54), exp.SN8(0x030fbc54), exp.SN8(0xf89be510), exp.SN8(0x07641af0), exp.SN8(0xfcf043ac) },
+            { exp.SN8(0xfb8e3130), exp.SN8(0x07d8a5f0), exp.SN8(0xfe70747c), exp.SN8(0xf9592678), exp.SN8(0x06a6d988), exp.SN8(0x018f8b84), exp.SN8(0xf8275a10), exp.SN8(0x0471ced0) },
+            { exp.SN8(0xfa57d868), exp.SN8(0x05a82798), exp.SN8(0x05a82798), exp.SN8(0xfa57d868), exp.SN8(0xfa57d868), exp.SN8(0x05a82798), exp.SN8(0x05a82798), exp.SN8(0xfa57d868) },
+            { exp.SN8(0xf9592678), exp.SN8(0x018f8b84), exp.SN8(0x07d8a5f0), exp.SN8(0x0471ced0), exp.SN8(0xfb8e3130), exp.SN8(0xf8275a10), exp.SN8(0xfe70747c), exp.SN8(0x06a6d988) },
+            { exp.SN8(0xf89be510), exp.SN8(0xfcf043ac), exp.SN8(0x030fbc54), exp.SN8(0x07641af0), exp.SN8(0x07641af0), exp.SN8(0x030fbc54), exp.SN8(0xfcf043ac), exp.SN8(0xf89be510) },
+            { exp.SN8(0xf8275a10), exp.SN8(0xf9592678), exp.SN8(0xfb8e3130), exp.SN8(0xfe70747c), exp.SN8(0x018f8b84), exp.SN8(0x0471ced0), exp.SN8(0x06a6d988), exp.SN8(0x07d8a5f0) },
+            { exp.SN8(0xf8000000), exp.SN8(0xf8000000), exp.SN8(0xf8000000), exp.SN8(0xf8000000), exp.SN8(0xf8000000), exp.SN8(0xf8000000), exp.SN8(0xf8000000), exp.SN8(0xf8000000) },
+            { exp.SN8(0xf8275a10), exp.SN8(0xf9592678), exp.SN8(0xfb8e3130), exp.SN8(0xfe70747c), exp.SN8(0x018f8b84), exp.SN8(0x0471ced0), exp.SN8(0x06a6d988), exp.SN8(0x07d8a5f0) },
+            { exp.SN8(0xf89be510), exp.SN8(0xfcf043ac), exp.SN8(0x030fbc54), exp.SN8(0x07641af0), exp.SN8(0x07641af0), exp.SN8(0x030fbc54), exp.SN8(0xfcf043ac), exp.SN8(0xf89be510) },
+            { exp.SN8(0xf9592678), exp.SN8(0x018f8b84), exp.SN8(0x07d8a5f0), exp.SN8(0x0471ced0), exp.SN8(0xfb8e3130), exp.SN8(0xf8275a10), exp.SN8(0xfe70747c), exp.SN8(0x06a6d988) }
         };
     }
 
@@ -118,5 +132,5 @@ namespace INGdemo.Lib
         };
     }
 
- 
+
 }
