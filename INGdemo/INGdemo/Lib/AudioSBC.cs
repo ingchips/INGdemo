@@ -30,6 +30,7 @@ namespace INGdemo.Lib
             Readindex = 0;
             inputSize = 0;
 
+            sbc.priv.init = false;
             sbc.priv.frame.scale_factor = new uint[2,8];
             sbc.priv.frame.sb_sample_f = new int[16,2,8];
             sbc.priv.frame.sb_sample = new int[16,2,8];
@@ -49,7 +50,6 @@ namespace INGdemo.Lib
 
         int sbc_decode(byte[] data, int input_len, short[] output, int output_len, out int written)
         {
-            System.Diagnostics.Debug.WriteLine("sbc_decode()!");
             int i, ch, framelen, samples;
             framelen = sbc_unpack_frame(data, ref sbc.priv.frame, input_len);
 

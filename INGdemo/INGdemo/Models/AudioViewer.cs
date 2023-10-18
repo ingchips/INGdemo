@@ -268,6 +268,7 @@ namespace INGdemo.Models
         {
             await charCtrl.WriteAsync(new byte[1] { CMD_MIC_CLOSE });
             Player.Stop();
+            Decoder = null;
 
             if (int.Parse(SamplingRatePicker.SelectedItem.ToString()) != SpeechRecognitionSettings.SAMPLE_RATE) return;
 
@@ -302,7 +303,6 @@ namespace INGdemo.Models
         async private void BtnTalk_Pressed(object sender, EventArgs e)
         {
             int samplingRate = int.Parse(SamplingRatePicker.SelectedItem.ToString());
-            string audioCodec = AlgorithmPicker.SelectedItem.ToString();
             SetupDecoder();
             Decoder.Reset();
             Player.Play(samplingRate);
