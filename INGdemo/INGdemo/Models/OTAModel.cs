@@ -63,7 +63,7 @@ namespace INGota.Models
             labelTopAddr.Style = Device.Styles.TitleStyle;
 
             var secureInfo = new Label();
-            
+
             secureInfo.Style = Device.Styles.CaptionStyle;
             secureInfo.TextColor = Color.White;
             secureInfo.HorizontalTextAlignment = TextAlignment.Center;
@@ -95,6 +95,7 @@ namespace INGota.Models
             seriesPicker = new Picker { Title = "Select Chip Series:" };
             seriesPicker.Items.Add("ING9188xx/ING9187xx");
             seriesPicker.Items.Add("ING9168xx");
+            seriesPicker.Items.Add("ING20xx");
             seriesPicker.SelectedIndex = 0;
             seriesPicker.HorizontalOptions = LayoutOptions.FillAndExpand;
             seriesPicker.SelectedIndexChanged += SeriesPicker_SelectedIndexChanged;
@@ -109,7 +110,7 @@ namespace INGota.Models
             container.Children.Add(seriesCont);
             container.Children.Add(labelTopAddr);
             container.Children.Add(topAddressInput);
-            container.Children.Add(server);            
+            container.Children.Add(server);
             container.Children.Add(urlInput);
 
             var btn = new Button
@@ -154,7 +155,7 @@ namespace INGota.Models
 
         private void UpdateFlashTopAddress()
         {
-            topAddressInput.Text = "0x" + ota.GetFlashTopAddress(seriesPicker.SelectedIndex).ToString("X8");            
+            topAddressInput.Text = "0x" + ota.GetFlashTopAddress(seriesPicker.SelectedIndex).ToString("X8");
         }
 
         private void SeriesPicker_SelectedIndexChanged(object sender, EventArgs e)
@@ -195,7 +196,7 @@ namespace INGota.Models
             container.HorizontalOptions = LayoutOptions.Fill;
             container.Children.Add(RunningInd);
             container.Children.Add(Summary);
-            container.Children.Add(Action);            
+            container.Children.Add(Action);
 
             return container;
         }
@@ -335,7 +336,7 @@ namespace INGota.Models
                     try
                     {
                         BleDevice.UpdateConnectionInterval(ConnectionInterval.High);
-                        int MtuSize = await BleDevice.RequestMtuAsync(250);                        
+                        int MtuSize = await BleDevice.RequestMtuAsync(250);
                         r = await ota.Update(Math.Max(23, MtuSize - 4));
                     }
                     finally

@@ -167,6 +167,7 @@ namespace INGota.FOTA
         {
              new FlashInfo(0x4000U, 512 * 1024, 8 * 1024, true),        // ING9188
              new FlashInfo(0x02002000U, (512 - 8) * 1024, 4 * 1024, false),   // ING9168
+             new FlashInfo(0x02002000U, (256 - 8) * 1024, 4 * 1024, false),   // ING20
         };
 
         FlashInfo CurrentFlash;
